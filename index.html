@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Torre de Control · Despacho Nocturno</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 :root{
   --bg:#0f1419;--panel:#161c24;--panel2:#1c2530;--line:#27313d;
@@ -20,54 +20,39 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .mono{font-family:'Consolas','Courier New',monospace;font-size:12px}
 .hidden{display:none!important}
-
 .header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
 .logo{display:flex;align-items:center;gap:10px}
 .logo h1{font-size:17px;font-weight:600}
 .live-dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);flex-shrink:0}
 .header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .btn{font-size:12px;padding:7px 13px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.btn:hover{border-color:var(--accent)}
-.btn.danger{background:var(--alertbg);border-color:var(--alert);color:var(--alert)}
-.btn.dl{background:var(--okbg);border-color:var(--ok);color:var(--ok)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-
+.btn:hover{border-color:var(--accent)}.btn.danger{background:var(--alertbg);border-color:var(--alert);color:var(--alert)}
+.btn.dl{background:var(--okbg);border-color:var(--ok);color:var(--ok)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .config-row{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .config-row label{font-size:12px;color:var(--muted)}
 .config-row input{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:13px;padding:6px 10px;border-radius:6px;outline:none}
 .config-row input:focus{border-color:var(--accent)}
-.separator{color:var(--muted);font-size:18px;line-height:1}
-
+.separator{color:var(--muted);font-size:18px}
 .files{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.file-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 14px;position:relative}
+.file-card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:11px 14px}
 .file-card .fname{font-size:11px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.04em}
 .file-card .fstatus{display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px;color:var(--muted)}
-.file-card.ok .fstatus{color:var(--ok)}
-.file-card.err .fstatus{color:var(--alert)}
+.file-card.ok .fstatus{color:var(--ok)}.file-card.err .fstatus{color:var(--alert)}
 .file-card .frows{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px}
-.file-card .ftag{font-size:10px;margin-top:4px;color:var(--accent);opacity:.8}
-.file-card .drop{margin-top:8px}
-.file-card input[type=file]{font-size:11px;color:var(--muted);width:100%}
-
+.file-card .ftag{font-size:10px;margin-top:4px;color:var(--accent)}
+.file-card input[type=file]{font-size:11px;color:var(--muted);width:100%;margin-top:8px}
 .filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .filter-row .lbl{font-size:12px;color:var(--muted)}
-.chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer;transition:all .15s}
-.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
 .chip.on{background:#13283f;border-color:var(--accent);color:var(--accent)}
-
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
-.kpi .kn{font-size:26px;font-weight:700;line-height:1}
-.kpi .kl{font-size:11px;color:var(--muted);margin-top:4px}
+.kpi .kn{font-size:26px;font-weight:700;line-height:1}.kpi .kl{font-size:11px;color:var(--muted);margin-top:4px}
 .kpi.ok .kn{color:var(--ok)}.kpi.warn .kn{color:var(--warn)}.kpi.alert .kn{color:var(--alert)}.kpi.orange .kn{color:var(--purple)}
-
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
 .tab{padding:9px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
-.tab:hover{color:var(--txt)}
 .tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .tab-content{display:none}.tab-content.active{display:block}
-
 .flota-group{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:10px}
 .flota-header{display:flex;align-items:center;gap:16px;padding:14px 16px;cursor:pointer;flex-wrap:wrap}
 .flota-header:hover{background:var(--panel2)}
@@ -76,11 +61,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .pipeline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1}
 .pipe-stage{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;text-align:center;min-width:88px}
 .pipe-stage .ps-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
-.pipe-stage .ps-val{font-weight:700;font-size:14px;color:var(--txt)}
-.pipe-stage .ps-sub{font-size:10px;margin-top:1px}
-.pipe-stage.has-missing .ps-sub{color:var(--alert)}
-.pipe-stage.all-ok .ps-sub{color:var(--ok)}
-.pipe-stage.na-stage{opacity:.4}
+.pipe-stage .ps-val{font-weight:700;font-size:14px;color:var(--txt)}.pipe-stage .ps-sub{font-size:10px;margin-top:1px}
+.pipe-stage.has-missing .ps-sub{color:var(--alert)}.pipe-stage.all-ok .ps-sub{color:var(--ok)}.pipe-stage.na-stage{opacity:.4}
 .pipe-arrow{color:var(--line);font-size:16px}
 .flota-badges{display:flex;gap:6px;flex-wrap:wrap}
 .flota-expand-body{display:none;border-top:1px solid var(--line)}
@@ -93,10 +75,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .detail-table td{font-size:12px;padding:8px 10px;border-bottom:1px solid #1a2330;vertical-align:middle}
 .detail-table tr:last-child td{border-bottom:none}
 .detail-table tbody tr:hover td{background:var(--panel2)}
-
 .expand-icon{font-size:11px;color:var(--muted);transition:transform .2s;display:inline-block}
 .expanded .expand-icon{transform:rotate(90deg)}
-
 .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;white-space:nowrap}
 .b-ok{background:var(--okbg);color:var(--ok);border:1px solid #1a4a25}
 .b-warn{background:var(--warnbg);color:var(--warn);border:1px solid #4a3a0a}
@@ -104,14 +84,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .b-orange{background:var(--orangebg);color:var(--orange);border:1px solid #4a2a08}
 .b-gray{background:var(--graybg);color:var(--gray);border:1px solid var(--line)}
 .b-priority{background:var(--purplebg);color:var(--purple);border:1px solid #6b3fa0}
-
 .stage{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;border-radius:5px;font-size:12px;font-weight:700;padding:0 5px}
-.s-ok{background:var(--okbg);color:var(--ok)}
-.s-no{background:var(--alertbg);color:var(--alert)}
-.s-na{background:var(--graybg);color:var(--muted);font-size:10px}
-.s-part{background:var(--warnbg);color:var(--warn)}
+.s-ok{background:var(--okbg);color:var(--ok)}.s-no{background:var(--alertbg);color:var(--alert)}
+.s-na{background:var(--graybg);color:var(--muted);font-size:10px}.s-part{background:var(--warnbg);color:var(--warn)}
 .flota-tag{font-size:10px;color:var(--muted);background:var(--panel2);padding:2px 7px;border-radius:4px;border:1px solid var(--line)}
-
 .table-card{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .table-toolbar{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);gap:10px;flex-wrap:wrap}
 .table-toolbar .tt{font-weight:600;font-size:13px}
@@ -123,20 +99,17 @@ table.main tbody tr:hover td{background:var(--panel2)}
 .cono-inner{padding:10px 16px}
 .progress{display:flex;align-items:center;gap:8px}
 .prog-bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:60px;max-width:120px}
-.prog-fill{height:100%;border-radius:3px;background:var(--ok)}
-.prog-fill.warn{background:var(--warn)}
+.prog-fill{height:100%;border-radius:3px;background:var(--ok)}.prog-fill.warn{background:var(--warn)}
 .tfoot{padding:10px 14px;font-size:11px;color:var(--muted);border-top:1px solid var(--line)}
 .empty{padding:40px;text-align:center;color:var(--muted);font-size:13px}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .toast{position:fixed;bottom:20px;right:20px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 16px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:100;display:none}
-.toast.show{display:block}
-.toast.err{border-color:var(--alert);color:var(--alert)}
+.toast.show{display:block}.toast.err{border-color:var(--alert);color:var(--alert)}
 </style>
 </head>
 <body>
 <div class="wrap">
-
   <div class="header">
     <div class="logo"><div class="live-dot"></div><h1>Torre de Control · Despacho Nocturno</h1></div>
     <div class="header-right">
@@ -144,44 +117,19 @@ table.main tbody tr:hover td{background:var(--panel2)}
       <button class="btn danger" onclick="clearAll()">⊗ Limpiar</button>
     </div>
   </div>
-
   <div class="config-row">
     <span style="font-size:12px;color:var(--muted);font-weight:500">Ventana de análisis</span>
-    <label>Desde</label>
-    <input type="datetime-local" id="desde" style="width:200px">
+    <label>Desde</label><input type="datetime-local" id="desde" style="width:200px">
     <span class="separator">→</span>
-    <label>Hasta</label>
-    <input type="datetime-local" id="hasta" style="width:200px">
+    <label>Hasta</label><input type="datetime-local" id="hasta" style="width:200px">
     <button class="btn primary" onclick="runAnalysis()">Aplicar</button>
   </div>
-
   <div class="files">
-    <div class="file-card" id="card-zeus">
-      <div class="fname">Archivo 1 — Zeus</div>
-      <div class="fstatus" id="status-zeus">Sin cargar</div>
-      <div class="frows" id="rows-zeus"></div>
-      <div class="drop"><input type="file" accept=".xlsx,.xls" onchange="onFile('zeus',this)"></div>
-    </div>
-    <div class="file-card" id="card-etiquetado">
-      <div class="fname">Archivo 2 — Etiquetado</div>
-      <div class="fstatus" id="status-etiquetado">Sin cargar</div>
-      <div class="frows" id="rows-etiquetado"></div>
-      <div class="drop"><input type="file" accept=".xlsx,.xls" onchange="onFile('etiquetado',this)"></div>
-    </div>
-    <div class="file-card" id="card-anclaje">
-      <div class="fname">Archivo 3 — Anclaje</div>
-      <div class="fstatus" id="status-anclaje">Sin cargar</div>
-      <div class="frows" id="rows-anclaje"></div>
-      <div class="drop"><input type="file" accept=".xlsx,.xls" onchange="onFile('anclaje',this)"></div>
-    </div>
-    <div class="file-card" id="card-tms">
-      <div class="fname">Archivo 4 — TMS</div>
-      <div class="fstatus" id="status-tms">Sin cargar</div>
-      <div class="frows" id="rows-tms"></div>
-      <div class="drop"><input type="file" accept=".zip,.csv" onchange="onFile('tms',this)"></div>
-    </div>
+    <div class="file-card" id="card-zeus"><div class="fname">Archivo 1 — Zeus</div><div class="fstatus" id="status-zeus">Sin cargar</div><div class="frows" id="rows-zeus"></div><input type="file" accept=".xlsx,.xls" onchange="onFile('zeus',this)"></div>
+    <div class="file-card" id="card-etiquetado"><div class="fname">Archivo 2 — Etiquetado</div><div class="fstatus" id="status-etiquetado">Sin cargar</div><div class="frows" id="rows-etiquetado"></div><input type="file" accept=".xlsx,.xls" onchange="onFile('etiquetado',this)"></div>
+    <div class="file-card" id="card-anclaje"><div class="fname">Archivo 3 — Anclaje</div><div class="fstatus" id="status-anclaje">Sin cargar</div><div class="frows" id="rows-anclaje"></div><input type="file" accept=".xlsx,.xls" onchange="onFile('anclaje',this)"></div>
+    <div class="file-card" id="card-tms"><div class="fname">Archivo 4 — TMS</div><div class="fstatus" id="status-tms">Sin cargar</div><div class="frows" id="rows-tms"></div><div class="ftag" id="tag-tms"></div><input type="file" accept=".zip,.csv,.xlsx,.xls" onchange="onFile('tms',this)"></div>
   </div>
-
   <div id="resultsArea" class="hidden">
     <div class="filter-row" style="margin-bottom:14px">
       <span class="lbl">Flota:</span>
@@ -190,9 +138,7 @@ table.main tbody tr:hover td{background:var(--panel2)}
       <span class="chip" data-flota="VANS RUTEO DINAMICO" onclick="setFlota(this)">VANS RUTEO DINÁMICO</span>
       <span class="chip" data-flota="VANS RUTEO ESTATICO" onclick="setFlota(this)">VANS RUTEO ESTÁTICO</span>
     </div>
-
     <div class="kpis" id="kpis"></div>
-
     <div style="margin-top:14px">
       <div class="tabs">
         <div class="tab active" onclick="switchTab('pedidos',this)">📦 Pedidos</div>
@@ -202,53 +148,43 @@ table.main tbody tr:hover td{background:var(--panel2)}
       <div id="tab-conos" class="tab-content" style="margin-top:10px"></div>
     </div>
   </div>
-
   <div id="emptyState" class="empty">Carga los archivos y define la ventana para ver el estado del despacho.</div>
-
 </div>
 <div class="toast" id="toast"></div>
 
 <script>
 /* ============================================================
-   CONFIGURACIÓN — ajusta aquí si cambian posiciones o nombres
-   Posiciones por índice de columna: A=0, B=1, C=2 ... (E=4, G=6, K=10, M=12, T=19)
+   CONFIGURACIÓN — ajusta aquí si cambian posiciones de columnas
+   Índices: A=0 B=1 C=2 D=3 E=4 F=5 G=6 H=7 I=8 J=9 K=10 L=11 M=12 N=13 T=19
    ============================================================ */
 const COLS = {
-  zeus:       { codigo:0, flota:4, tipoRecep:12, bultos:19, fecha:6 },  // A,E,M,T,G
-  etiquetado: { codigo:0, fecha:4 },                                    // A,E
-  anclaje:    { codigo:0, cono:4, fecha:10 },                           // A,E,K
+  zeus:       { codigo:0, flota:4, tipoRecep:12, bultos:19, fecha:6 },
+  etiquetado: { codigo:0, fecha:4 },
+  anclaje:    { codigo:0, cono:4, fecha:10 },
   tms:        { codigo:'número', estado:'nombreEstadoEnvio', fecha:'enReparto' }
 };
 const FLOTAS_VALIDAS = ['OF MOTORIZADOS','VANS RUTEO DINAMICO','VANS RUTEO ESTATICO'];
-const TMS_STATE_MAP = {
-  'EN REPARTO':      {cat:'dispatched', label:'En reparto'},
-  'ENTREGADO':       {cat:'dispatched', label:'Entregado'},
-  'EN BODEGA CROSSDOCK':{cat:'pending', label:'En bodega'},
-  'REENVIO CLIENTE': {cat:'pending',    label:'Reenvío'},
-  'REGISTRADO':      {cat:'review',     label:'Registrado'},
-  'CUARENTENA':      {cat:'quarantine', label:'Cuarentena'}
+const TMS_MAP = {
+  'EN REPARTO':         {cat:'dispatched', label:'En reparto'},
+  'ENTREGADO':          {cat:'dispatched', label:'Entregado'},
+  'EN BODEGA CROSSDOCK':{cat:'pending',    label:'En bodega'},
+  'REENVIO CLIENTE':    {cat:'pending',    label:'Reenvío'},
+  'REGISTRADO':         {cat:'review',     label:'Registrado'},
+  'CUARENTENA':         {cat:'quarantine', label:'Cuarentena'}
 };
+const CATBADGE = {ok:'b-ok',warn:'b-warn',alert:'b-alert',orange:'b-orange',priority:'b-priority',gray:'b-gray'};
 
-/* estado en memoria */
-let DATA = { zeus:null, etiquetado:null, anclaje:null, tms:null };
+let DATA = {zeus:null,etiquetado:null,anclaje:null,tms:null};
 let RESULT = null;
 let activeFlota = '__all__';
 
-/* ---------- utilidades ---------- */
+/* ---- utilidades ---- */
 function norm(s){return (s==null?'':s.toString()).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
-function toast(msg, err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',3500);}
-
-/* fecha -> timestamp "naive" (tratado como UTC para evitar líos de zona horaria) */
+function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',3500);}
 function toNaive(v){
   if(v==null||v==='')return null;
-  if(typeof v==='number'){ // serial de excel
-    const base=Date.UTC(1899,11,30);
-    return base + Math.round(v*86400000);
-  }
-  if(v instanceof Date){
-    return Date.UTC(v.getFullYear(),v.getMonth(),v.getDate(),v.getHours(),v.getMinutes(),v.getSeconds());
-  }
-  // string: "YYYY-MM-DD HH:mm[:ss]" o "DD/MM/YYYY HH:mm"
+  if(typeof v==='number'){return Date.UTC(1899,11,30)+Math.round(v*86400000);}
+  if(v instanceof Date){return Date.UTC(v.getFullYear(),v.getMonth(),v.getDate(),v.getHours(),v.getMinutes(),v.getSeconds());}
   const s=v.toString().trim();
   let m=s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
   if(m)return Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
@@ -256,216 +192,163 @@ function toNaive(v){
   if(m)return Date.UTC(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));
   m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(m)return Date.UTC(+m[1],+m[2]-1,+m[3]);
-  const d=new Date(s);
-  return isNaN(d)?null:Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes());
+  const d=new Date(s);return isNaN(d)?null:Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes());
 }
-function inputToNaive(str){
-  if(!str)return null;
-  const [date,time]=str.split('T');
-  const [y,mo,da]=date.split('-').map(Number);
-  const [h,mi]=(time||'0:0').split(':').map(Number);
-  return Date.UTC(y,mo-1,da,h||0,mi||0);
-}
+function inputToNaive(str){if(!str)return null;const [date,time]=str.split('T');const [y,mo,da]=date.split('-').map(Number);const [h,mi]=(time||'0:0').split(':').map(Number);return Date.UTC(y,mo-1,da,h||0,mi||0);}
 
-/* ---------- IndexedDB (persistencia simple) ---------- */
-const DB_NAME='torre_control', STORE='files';
-function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open(DB_NAME,1);r.onupgradeneeded=e=>{e.target.result.createObjectStore(STORE);};r.onsuccess=e=>res(e.target.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});}
-async function idbSet(k,v){try{const db=await idb();return new Promise((res)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
-async function idbGet(k){try{const db=await idb();return new Promise((res)=>{const tx=db.transaction(STORE,'readonly');const rq=tx.objectStore(STORE).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>res(null);});}catch(e){return null;}}
-async function idbClear(){try{const db=await idb();return new Promise((res)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).clear();tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
+/* ---- IndexedDB — guarda BYTES CRUDOS, no objetos parseados ---- */
+const DB='torre_control',ST='files';
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=e=>e.target.result.createObjectStore(ST);r.onsuccess=e=>res(e.target.result);r.onerror=()=>rej(r.error);});}
+async function idbSet(k,v){try{const db=await idb();return new Promise(res=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
+async function idbGet(k){try{const db=await idb();return new Promise(res=>{const tx=db.transaction(ST,'readonly');const rq=tx.objectStore(ST).get(k);rq.onsuccess=()=>res(rq.result);rq.onerror=()=>res(null);});}catch(e){return null;}}
+async function idbClear(){try{const db=await idb();return new Promise(res=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).clear();tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
 
-/* ---------- parsers ---------- */
-function readExcel(arrayBuffer){
-  const wb=XLSX.read(arrayBuffer,{type:'array',cellDates:true});
+/* ---- parsers ---- */
+function readExcel(buf){
+  const wb=XLSX.read(buf,{type:'array',cellDates:true});
   const sheet=wb.Sheets[wb.SheetNames[0]];
-  // matriz de filas, sin convertir tipos (raw) para manejar fechas nosotros
   return XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:null});
 }
-function readCSVText(text){
-  const out=Papa.parse(text,{header:true,skipEmptyLines:true});
-  return out.data;
-}
-async function parseTMS(file){
-  const name=file.name.toLowerCase();
-  if(name.endsWith('.zip')){
-    const zip=await JSZip.loadAsync(file);
-    const csvName=Object.keys(zip.files).find(n=>n.toLowerCase().endsWith('.csv')||n.toLowerCase().endsWith('.txt'));
-    if(!csvName)throw new Error('No se encontró CSV dentro del ZIP');
-    const text=await zip.files[csvName].async('string');
-    return readCSVText(text);
+function readCSV(text){return Papa.parse(text,{header:true,skipEmptyLines:true}).data;}
+async function parseTMSFromBuf(buf,name){
+  if(name.toLowerCase().endsWith('.zip')){
+    const zip=await JSZip.loadAsync(buf);
+    const fn=Object.keys(zip.files).find(n=>/\.(csv|txt)$/i.test(n));
+    if(!fn)throw new Error('No se encontró CSV dentro del ZIP');
+    const text=await zip.files[fn].async('string');
+    return readCSV(text);
   }
-  const text=await file.text();
-  return readCSVText(text);
+  return readCSV(new TextDecoder('utf-8').decode(buf));
 }
 
-async function onFile(kind, input){
+/* ---- carga de archivos ---- */
+async function onFile(kind,input){
   const file=input.files[0]; if(!file)return;
   const card=document.getElementById('card-'+kind);
   const st=document.getElementById('status-'+kind);
   const rw=document.getElementById('rows-'+kind);
-  card.className='file-card'; st.innerHTML='<span class="spinner"></span> Leyendo...';
+  card.className='file-card'; st.innerHTML='<span class="spinner"></span> Leyendo...'; rw.textContent='';
   try{
-    let payload;
-    if(kind==='tms'){
-      payload={type:'tms', rows:await parseTMS(file), name:file.name};
-    }else{
-      const buf=await file.arrayBuffer();
-      payload={type:'xlsx', rows:readExcel(buf), name:file.name};
-    }
-    DATA[kind]=payload;
+    const buf=await file.arrayBuffer();
+    let rows;
+    if(kind==='tms'){rows=await parseTMSFromBuf(buf,file.name);}
+    else{rows=readExcel(buf);}
+    DATA[kind]={rows,name:file.name};
     card.classList.add('ok'); st.textContent='✓ Cargado';
-    const n=Math.max(0,payload.rows.length-(kind==='tms'?0:1));
-    rw.textContent=n+' filas'+(kind==='tms'&&file.name.toLowerCase().endsWith('.zip')?' · ZIP→CSV':'');
-    await idbSet(kind,payload);
+    const n=Math.max(0,rows.length-(kind==='tms'?0:1));
+    rw.textContent=n+' filas';
+    if(kind==='tms'&&file.name.toLowerCase().endsWith('.zip')){document.getElementById('tag-tms').textContent='ZIP → CSV';}
+    // guardar bytes crudos (ArrayBuffer es clonable sin problemas)
+    await idbSet(kind+'_buf', buf);
+    await idbSet(kind+'_name', file.name);
     autoSuggestWindow();
   }catch(e){
-    card.classList.add('err'); st.textContent='✕ Error';
-    rw.textContent=e.message||'No se pudo leer'; toast('Error en '+kind+': '+(e.message||e),true);
-    DATA[kind]=null;
+    card.classList.add('err'); st.textContent='✕ Error'; rw.textContent=e.message||'No se pudo leer';
+    toast('Error '+kind+': '+(e.message||e),true); DATA[kind]=null;
   }
 }
 
-/* sugiere ventana desde-hasta mirando las fechas de Zeus si están vacías */
 function autoSuggestWindow(){
-  const d=document.getElementById('desde'), h=document.getElementById('hasta');
-  if(d.value||h.value)return;
+  const d=document.getElementById('desde'),h=document.getElementById('hasta');
+  if(d.value&&h.value)return;
   const src=DATA.anclaje||DATA.etiquetado||DATA.zeus; if(!src)return;
-  const col=COLS[DATA.anclaje?'anclaje':DATA.etiquetado?'etiquetado':'zeus'].fecha;
+  const col=src===DATA.zeus?COLS.zeus.fecha:src===DATA.etiquetado?COLS.etiquetado.fecha:COLS.anclaje.fecha;
   let max=null;
-  for(let i=1;i<src.rows.length;i++){const t=toNaive(src.rows[i][col]);if(t&&(!max||t>max))max=t;}
+  for(let i=1;i<src.rows.length;i++){const t=toNaive(src.rows[i]?src.rows[i][col]:null);if(t&&(!max||t>max))max=t;}
   if(!max)return;
-  const end=new Date(max), start=new Date(max-14*3600000); // ventana sugerida ~14h hacia atrás
-  const fmt=dt=>`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}T${String(dt.getUTCHours()).padStart(2,'0')}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;
-  d.value=fmt(start); h.value=fmt(end);
+  const fmt=t=>{const dt=new Date(t);return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}T${String(dt.getUTCHours()).padStart(2,'0')}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;};
+  if(!h.value)h.value=fmt(max);
+  if(!d.value)d.value=fmt(max-14*3600000);
 }
 
-/* ---------- motor de cruce ---------- */
-function buildIndex(payload, colMap, win, byName){
-  // devuelve Map<codigo, [registros{codigo,fecha,raw}]> filtrando por ventana
-  const map=new Map(); if(!payload)return map;
-  const rows=payload.rows; const start=win.start, end=win.end;
-  const startI = byName?0:1; // CSV ya viene como objetos; xlsx tiene fila de encabezado
-  for(let i=startI;i<rows.length;i++){
+/* ---- motor ---- */
+function buildIndex(data,colMap,win,isTMS){
+  const map=new Map(); if(!data)return map;
+  const rows=data.rows;
+  for(let i=isTMS?0:1;i<rows.length;i++){
     const r=rows[i]; if(!r)continue;
-    const codigo=(byName? r[colMap.codigo] : r[colMap.codigo]);
-    if(codigo==null||codigo==='')continue;
-    const key=codigo.toString().trim();
-    const fechaRaw = byName? r[colMap.fecha] : r[colMap.fecha];
-    const t=toNaive(fechaRaw);
-    // filtro de ventana (TMS no filtra)
-    if(!byName && win.apply){ if(t==null||t<start||t>end) continue; }
+    const rawCod=isTMS?r[colMap.codigo]:r[colMap.codigo];
+    if(rawCod==null||rawCod==='')continue;
+    const key=rawCod.toString().trim();
+    const t=toNaive(isTMS?r[colMap.fecha]:r[colMap.fecha]);
+    if(!isTMS&&win){if(t==null||t<win.start||t>win.end)continue;}
     if(!map.has(key))map.set(key,[]);
-    map.get(key).push({codigo:key, t, raw:r});
+    map.get(key).push({t,raw:r});
   }
   return map;
 }
-function mostRecent(arr){return arr.reduce((a,b)=>(b.t||0)>(a.t||0)?b:a);}
+function latest(arr){return arr.reduce((a,b)=>(b.t||0)>(a.t||0)?b:a);}
+function computeEstado(p){
+  const isVan=p.flota!=='OF MOTORIZADOS';
+  if(p.tmsCat==='quarantine')return{label:'No debe salir',cat:'priority'};
+  if(!p.etiq)return{label:'Sin etiquetar',cat:'alert'};
+  if(isVan){if(p.ancCount===0)return{label:'Sin anclar',cat:'alert'};if(p.ancCount<p.bultos)return{label:'Anclaje parcial',cat:'alert'};}
+  if(p.tmsCat==='dispatched')return{label:p.tmsLabel==='Entregado'?'Entregado':'Despachado',cat:'ok'};
+  if(p.tmsCat==='pending')return{label:'No salió ('+p.tmsLabel+')',cat:'warn'};
+  if(p.tmsCat==='review')return{label:'Revisar',cat:'orange'};
+  return{label:'Pendiente TMS',cat:'warn'};
+}
 
 function runAnalysis(){
   if(!DATA.zeus){toast('Falta cargar Zeus',true);return;}
   const start=inputToNaive(document.getElementById('desde').value);
   const end=inputToNaive(document.getElementById('hasta').value);
-  if(start==null||end==null){toast('Define la ventana desde-hasta',true);return;}
-  const win={start,end,apply:true};
-
-  // índices por código
-  const zeusMap=buildIndex(DATA.zeus, COLS.zeus, win, false);
-  const etiMap =buildIndex(DATA.etiquetado, COLS.etiquetado, win, false);
-  const ancMap =buildIndex(DATA.anclaje, COLS.anclaje, win, false);
-  const tmsMap =buildIndex(DATA.tms, COLS.tms, {apply:false}, true);
-
-  // filtrar Zeus por flota válida
-  const pedidos=[]; const codigosZeus=new Set();
-  for(const [cod,regs] of zeusMap){
-    const z=mostRecent(regs);
-    const flotaRaw=z.raw[COLS.zeus.flota];
-    const flotaN=norm(flotaRaw);
+  if(!start||!end){toast('Define la ventana desde-hasta',true);return;}
+  const win={start,end};
+  const zeusIdx=buildIndex(DATA.zeus,COLS.zeus,win,false);
+  const etiIdx=buildIndex(DATA.etiquetado,COLS.etiquetado,win,false);
+  const ancIdx=buildIndex(DATA.anclaje,COLS.anclaje,win,false);
+  const tmsIdx=buildIndex(DATA.tms,COLS.tms,null,true);
+  const pedidos=[]; const zeusSet=new Set();
+  for(const [cod,regs] of zeusIdx){
+    const z=latest(regs);
+    const flotaN=norm(z.raw[COLS.zeus.flota]);
     if(!FLOTAS_VALIDAS.includes(flotaN))continue;
-    codigosZeus.add(cod);
+    zeusSet.add(cod);
     const bultos=parseInt(z.raw[COLS.zeus.bultos])||1;
-    const eti=etiMap.get(cod); const anc=ancMap.get(cod)||[]; const tms=tmsMap.get(cod);
-    const tmsInfo=tms?TMS_STATE_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:(tms[0].raw[COLS.tms.estado]||'?')}:null;
-    const ancCount=anc.length;
-    const cono=anc.length?mostRecent(anc).raw[COLS.anclaje.cono]:null;
-    const p={
-      codigo:cod, flota:flotaN, bultos,
-      tipoRecep:z.raw[COLS.zeus.tipoRecep],
-      recep:true, etiq:!!eti, ancCount, cono,
-      tmsCat:tmsInfo?tmsInfo.cat:null, tmsLabel:tmsInfo?tmsInfo.label:null,
-      ancRows:anc
-    };
-    p.estado=computeEstado(p);
-    pedidos.push(p);
+    const eti=etiIdx.get(cod); const anc=ancIdx.get(cod)||[]; const tms=tmsIdx.get(cod);
+    const tmsI=tms?TMS_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:tms[0].raw[COLS.tms.estado]||'?'}:null;
+    const ancRec=anc.length?latest(anc):null;
+    const p={codigo:cod,flota:flotaN,bultos,recep:true,etiq:!!eti,ancCount:anc.length,cono:ancRec?ancRec.raw[COLS.anclaje.cono]:null,tmsCat:tmsI?tmsI.cat:null,tmsLabel:tmsI?tmsI.label:null,ancRows:anc};
+    p.estado=computeEstado(p); pedidos.push(p);
   }
-
-  // huérfanos: códigos en etiquetado/anclaje/tms que NO están en Zeus
   const sinRecep=[]; const seen=new Set();
-  const addOrphan=(cod, src)=>{
-    if(codigosZeus.has(cod)||seen.has(cod))return; seen.add(cod);
-    const eti=etiMap.get(cod); const anc=ancMap.get(cod)||[]; const tms=tmsMap.get(cod);
-    const tmsInfo=tms?TMS_STATE_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:(tms[0].raw[COLS.tms.estado]||'?')}:null;
-    sinRecep.push({codigo:cod, flota:'—', etiq:!!eti, ancCount:anc.length,
-      cono:anc.length?mostRecent(anc).raw[COLS.anclaje.cono]:null,
-      tmsCat:tmsInfo?tmsInfo.cat:null, tmsLabel:tmsInfo?tmsInfo.label:null,
-      estado:{label:'Sin recepción',cat:'alert'}, ancRows:anc});
+  const addOrphan=cod=>{
+    if(zeusSet.has(cod)||seen.has(cod))return; seen.add(cod);
+    const eti=etiIdx.get(cod); const anc=ancIdx.get(cod)||[]; const tms=tmsIdx.get(cod);
+    const tmsI=tms?TMS_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:tms[0].raw[COLS.tms.estado]||'?'}:null;
+    sinRecep.push({codigo:cod,flota:'—',etiq:!!eti,ancCount:anc.length,cono:anc.length?latest(anc).raw[COLS.anclaje.cono]:null,tmsCat:tmsI?tmsI.cat:null,tmsLabel:tmsI?tmsI.label:null,estado:{label:'Sin recepción',cat:'alert'},ancRows:anc});
   };
-  for(const cod of etiMap.keys())addOrphan(cod);
-  for(const cod of ancMap.keys())addOrphan(cod);
-  for(const cod of tmsMap.keys())addOrphan(cod);
-
-  RESULT={pedidos, sinRecep, win};
+  for(const cod of etiIdx.keys())addOrphan(cod);
+  for(const cod of ancIdx.keys())addOrphan(cod);
+  for(const cod of tmsIdx.keys())addOrphan(cod);
+  RESULT={pedidos,sinRecep,win};
   document.getElementById('emptyState').classList.add('hidden');
   document.getElementById('resultsArea').classList.remove('hidden');
   renderAll();
-  toast(pedidos.length+' pedidos analizados');
+  toast(pedidos.length+' pedidos analizados'+( sinRecep.length?` · ${sinRecep.length} sin recepción`:''));
 }
 
-function computeEstado(p){
-  const isVan=p.flota!=='OF MOTORIZADOS';
-  if(p.tmsCat==='quarantine')return {label:'No debe salir',cat:'priority'};
-  if(!p.etiq)return {label:'Sin etiquetar',cat:'alert'};
-  if(isVan){
-    if(p.ancCount===0)return {label:'Sin anclar',cat:'alert'};
-    if(p.ancCount<p.bultos)return {label:'Anclaje parcial',cat:'alert'};
-  }
-  if(p.tmsCat==='dispatched')return {label:p.tmsLabel==='Entregado'?'Entregado':'Despachado',cat:'ok'};
-  if(p.tmsCat==='pending')return {label:'No salió ('+p.tmsLabel+')',cat:'warn'};
-  if(p.tmsCat==='review')return {label:'Revisar',cat:'orange'};
-  return {label:'Pendiente TMS',cat:'warn'};
-}
-
-/* ---------- render ---------- */
-const CATBADGE={ok:'b-ok',warn:'b-warn',alert:'b-alert',orange:'b-orange',priority:'b-priority',gray:'b-gray'};
-function tmsBadge(p){
-  if(!p.tmsCat)return '<span class="badge b-gray">Sin registro</span>';
-  const cls={dispatched:'b-ok',pending:'b-warn',review:'b-orange',quarantine:'b-priority'}[p.tmsCat]||'b-gray';
-  return `<span class="badge ${cls}">${p.tmsLabel}</span>`;
-}
+/* ---- render ---- */
+function tmsBadge(p){if(!p.tmsCat)return'<span class="badge b-gray">Sin registro</span>';const cls={dispatched:'b-ok',pending:'b-warn',review:'b-orange',quarantine:'b-priority'}[p.tmsCat]||'b-gray';return`<span class="badge ${cls}">${p.tmsLabel}</span>`;}
 function stageCell(ok){return ok?'<span class="stage s-ok">✓</span>':'<span class="stage s-no">✕</span>';}
-
-function filteredPedidos(){
-  if(activeFlota==='__all__')return RESULT.pedidos;
-  return RESULT.pedidos.filter(p=>p.flota===activeFlota);
-}
-
 function renderAll(){renderTurno();renderKPIs();renderPedidos();renderConos();}
+function renderTurno(){const w=RESULT.win;const f=t=>{const d=new Date(t);return`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;};document.getElementById('turnoLabel').textContent=`Ventana: ${f(w.start)} → ${f(w.end)}`;}
+function renderKPIs(){const ps=activeFlota==='__all__'?RESULT.pedidos:RESULT.pedidos.filter(p=>p.flota===activeFlota);const c={ok:0,warn:0,alert:0,priority:0};ps.forEach(p=>c[p.estado.cat]=(c[p.estado.cat]||0)+1);document.getElementById('kpis').innerHTML=`<div class="kpi"><div class="kn">${ps.length}</div><div class="kl">Pedidos en ventana</div></div><div class="kpi ok"><div class="kn">${c.ok}</div><div class="kl">Despachados</div></div><div class="kpi warn"><div class="kn">${c.warn}</div><div class="kl">En proceso</div></div><div class="kpi alert"><div class="kn">${c.alert}</div><div class="kl">Alertas</div></div><div class="kpi orange"><div class="kn">${c.priority}</div><div class="kl">Cuarentena</div></div>`;}
 
-function renderTurno(){
-  const w=RESULT.win; const f=t=>{const d=new Date(t);return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;};
-  document.getElementById('turnoLabel').textContent=`Ventana: ${f(w.start)} → ${f(w.end)}`;
-}
+function pipeStage(lbl,val,missing,na){if(na)return`<div class="pipe-stage na-stage"><div class="ps-label">${lbl}</div><div class="ps-val">N/A</div><div class="ps-sub">no aplica</div></div>`;const cls=missing>0?'has-missing':'all-ok';return`<div class="pipe-stage ${cls}"><div class="ps-label">${lbl}</div><div class="ps-val">${val}</div><div class="ps-sub">${missing>0?`faltan ${missing}`:'todos ✓'}</div></div>`;}
 
-function renderKPIs(){
-  const ps=filteredPedidos();
-  const c={ok:0,warn:0,alert:0,priority:0};
-  ps.forEach(p=>c[p.estado.cat]=(c[p.estado.cat]||0)+1);
-  const el=document.getElementById('kpis');
-  el.innerHTML=`
-    <div class="kpi"><div class="kn">${ps.length}</div><div class="kl">Pedidos en ventana</div></div>
-    <div class="kpi ok"><div class="kn">${c.ok}</div><div class="kl">Despachados</div></div>
-    <div class="kpi warn"><div class="kn">${c.warn}</div><div class="kl">En proceso</div></div>
-    <div class="kpi alert"><div class="kn">${c.alert}</div><div class="kl">Alertas</div></div>
-    <div class="kpi orange"><div class="kn">${c.priority}</div><div class="kl">Cuarentena</div></div>`;
+function renderFlotaSections(ps,isVan){
+  let h='';
+  const sec=(title,color,rows,cols)=>{if(!rows.length)return'';return`<div class="flota-section"><div class="flota-section-title"><span class="sc" style="background:${color}"></span>${title} — ${rows.length}</div><table class="detail-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;};
+  const sinEti=ps.filter(p=>!p.etiq).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${stageCell(true)}</td><td>${stageCell(false)}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
+  h+=sec('Sin etiquetar','var(--alert)',sinEti,['Código','Bultos','Recep','Etiq','TMS','Estado']);
+  if(isVan){const sinAnc=ps.filter(p=>p.etiq&&p.ancCount<p.bultos).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td><span class="stage ${p.ancCount===0?'s-no':'s-part'}">${p.ancCount}/${p.bultos}</span></td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);h+=sec('Sin anclar / anclaje incompleto','var(--alert)',sinAnc,['Código','Bultos','Anclaje','TMS','Estado']);}
+  const cuar=ps.filter(p=>p.estado.cat==='priority').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge b-priority">⚠ ${p.estado.label}</span></td></tr>`);
+  h+=sec('Cuarentena — no deben salir','var(--purple)',cuar,['Código','Bultos','TMS','Estado']);
+  const pend=ps.filter(p=>p.estado.cat==='warn'||p.estado.cat==='orange').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
+  h+=sec('Pendiente TMS / revisar','var(--warn)',pend,['Código','Bultos','TMS','Estado']);
+  return h||'<div class="flota-section" style="color:var(--ok);padding-bottom:14px">✓ Todos los pedidos completos en esta ventana</div>';
 }
 
 function renderPedidos(){
@@ -474,9 +357,7 @@ function renderPedidos(){
   let html='';
   flotas.forEach((fl,idx)=>{
     const ps=RESULT.pedidos.filter(p=>p.flota===fl);
-    if(!ps.length && activeFlota==='__all__')return;
     const isVan=fl!=='OF MOTORIZADOS';
-    const total=ps.length;
     const etiqOk=ps.filter(p=>p.etiq).length;
     const ancOk=isVan?ps.filter(p=>p.ancCount>=p.bultos&&p.bultos>0).length:null;
     const tmsOk=ps.filter(p=>p.tmsCat==='dispatched').length;
@@ -484,19 +365,13 @@ function renderPedidos(){
     const alerts=ps.filter(p=>p.estado.cat==='alert').length;
     const okc=ps.filter(p=>p.estado.cat==='ok').length;
     const id='f'+idx;
-    const stage=(lbl,val,missing,na)=>{
-      if(na)return `<div class="pipe-stage na-stage"><div class="ps-label">${lbl}</div><div class="ps-val">N/A</div><div class="ps-sub">no aplica</div></div>`;
-      const cls=missing>0?'has-missing':'all-ok';
-      const sub=missing>0?`faltan ${missing}`:'todos ✓';
-      return `<div class="pipe-stage ${cls}"><div class="ps-label">${lbl}</div><div class="ps-val">${val}</div><div class="ps-sub">${sub}</div></div>`;
-    };
     html+=`<div class="flota-group"><div class="flota-header" onclick="toggleFlota('${id}',this)">
-      <div class="flota-name"><span class="expand-icon">▶</span> ${fl} <span class="flota-total">${total} pedidos</span></div>
+      <div class="flota-name"><span class="expand-icon">▶</span>${fl}<span class="flota-total">${ps.length} pedidos</span></div>
       <div class="pipeline">
-        ${stage('Recepción',total,0)}<span class="pipe-arrow">→</span>
-        ${stage('Etiquetado',etiqOk,total-etiqOk)}<span class="pipe-arrow">→</span>
-        ${stage('Anclaje',ancOk,isVan?total-ancOk:0,!isVan)}<span class="pipe-arrow">→</span>
-        ${stage('TMS',tmsOk,total-tmsOk)}
+        ${pipeStage('Recepción',ps.length,0)}<span class="pipe-arrow">→</span>
+        ${pipeStage('Etiquetado',etiqOk,ps.length-etiqOk)}<span class="pipe-arrow">→</span>
+        ${pipeStage('Anclaje',ancOk,isVan?ps.length-ancOk:0,!isVan)}<span class="pipe-arrow">→</span>
+        ${pipeStage('TMS',tmsOk,ps.length-tmsOk)}
       </div>
       <div class="flota-badges">
         ${cuar?`<span class="badge b-priority">${cuar} cuarentena</span>`:''}
@@ -505,129 +380,59 @@ function renderPedidos(){
       </div></div>
       <div id="${id}" class="flota-expand-body">${renderFlotaSections(ps,isVan)}</div></div>`;
   });
-
-  // sección sin recepción
-  if(RESULT.sinRecep.length && activeFlota==='__all__'){
-    html+=`<div class="flota-group"><div class="flota-header" onclick="toggleFlota('forphan',this)">
-      <div class="flota-name"><span class="expand-icon">▶</span> Sin recepción <span class="flota-total">${RESULT.sinRecep.length} códigos</span></div>
-      <div class="pipeline" style="color:var(--muted);font-size:12px">Aparecen en etiquetado/anclaje/TMS pero no en Zeus</div>
-      <div class="flota-badges"><span class="badge b-alert">${RESULT.sinRecep.length} a revisar</span></div></div>
-      <div id="forphan" class="flota-expand-body"><div class="flota-section">
-      <table class="detail-table"><thead><tr><th>Código</th><th>Etiquetado</th><th>Anclaje</th><th>TMS</th></tr></thead><tbody>
-      ${RESULT.sinRecep.slice(0,200).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${stageCell(p.etiq)}</td><td>${p.ancCount||'—'}</td><td>${tmsBadge(p)}</td></tr>`).join('')}
-      </tbody></table>${RESULT.sinRecep.length>200?`<div style="font-size:11px;color:var(--muted)">+ ${RESULT.sinRecep.length-200} más (ver export)</div>`:''}</div></div></div>`;
+  if(RESULT.sinRecep.length&&activeFlota==='__all__'){
+    html+=`<div class="flota-group"><div class="flota-header" onclick="toggleFlota('forphan',this)"><div class="flota-name"><span class="expand-icon">▶</span>Sin recepción<span class="flota-total">${RESULT.sinRecep.length} códigos</span></div><div class="pipeline" style="color:var(--muted);font-size:12px">Aparecen en etiquetado/anclaje/TMS pero no en Zeus</div><div class="flota-badges"><span class="badge b-alert">${RESULT.sinRecep.length} a revisar</span></div></div><div id="forphan" class="flota-expand-body"><div class="flota-section"><table class="detail-table"><thead><tr><th>Código</th><th>Etiq</th><th>Anclaje</th><th>TMS</th></tr></thead><tbody>${RESULT.sinRecep.slice(0,200).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${stageCell(p.etiq)}</td><td>${p.ancCount||'—'}</td><td>${tmsBadge(p)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
   }
-
-  cont.innerHTML=html||'<div class="empty">Sin pedidos para esta flota en la ventana.</div>';
-  cont.innerHTML+=`<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px">Click en una flota para ver los pendientes · <button class="btn dl" style="font-size:11px;padding:4px 10px" onclick="exportExcel()">⬇ Exportar Excel</button></div>`;
-}
-
-function renderFlotaSections(ps,isVan){
-  let h='';
-  const sec=(title,color,rows,cols)=>{
-    if(!rows.length)return'';
-    return `<div class="flota-section"><div class="flota-section-title"><span class="sc" style="background:${color}"></span> ${title} — ${rows.length}</div>
-      <table class="detail-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>r).join('')}</tbody></table></div>`;
-  };
-  const sinEti=ps.filter(p=>!p.etiq).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${stageCell(true)}</td><td>${stageCell(false)}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
-  h+=sec('Sin etiquetar','var(--alert)',sinEti,['Código','Bultos','Recep','Etiq','TMS','Estado']);
-  if(isVan){
-    const sinAnc=ps.filter(p=>p.etiq&&p.ancCount<p.bultos).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td><span class="stage ${p.ancCount===0?'s-no':'s-part'}">${p.ancCount}/${p.bultos}</span></td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
-    h+=sec('Sin anclar / anclaje incompleto','var(--alert)',sinAnc,['Código','Bultos','Anclaje','TMS','Estado']);
-  }
-  const cuar=ps.filter(p=>p.estado.cat==='priority').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge b-priority">⚠ ${p.estado.label}</span></td></tr>`);
-  h+=sec('Cuarentena — no deben salir','var(--purple)',cuar,['Código','Bultos','TMS','Estado']);
-  const pend=ps.filter(p=>p.estado.cat==='warn'||p.estado.cat==='orange').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
-  h+=sec('Pendiente TMS / revisar','var(--warn)',pend,['Código','Bultos','TMS','Estado']);
-  if(!h)h='<div class="flota-section" style="color:var(--ok);padding-bottom:14px">✓ Todos los pedidos completos</div>';
-  return h;
+  cont.innerHTML=(html||'<div class="empty">Sin pedidos para esta flota en la ventana.</div>')+`<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px"><button class="btn dl" style="font-size:11px;padding:4px 10px" onclick="exportExcel()">⬇ Exportar Excel</button></div>`;
 }
 
 function renderConos(){
   const cont=document.getElementById('tab-conos');
-  // agrupar por cono (solo vans, los que tienen anclaje)
   const conos=new Map();
   const pool=activeFlota==='__all__'?RESULT.pedidos:RESULT.pedidos.filter(p=>p.flota===activeFlota);
-  pool.forEach(p=>{
-    if(p.flota==='OF MOTORIZADOS')return;
-    p.ancRows.forEach(a=>{
-      const cono=a.raw[COLS.anclaje.cono]; if(cono==null||cono==='')return;
-      const key=cono.toString().trim();
-      if(!conos.has(key))conos.set(key,{flota:p.flota,items:[]});
-      conos.get(key).items.push(p);
-    });
-  });
+  pool.forEach(p=>{if(p.flota==='OF MOTORIZADOS')return;p.ancRows.forEach(a=>{const c=a.raw[COLS.anclaje.cono];if(c==null||c==='')return;const k=c.toString().trim();if(!conos.has(k))conos.set(k,{flota:p.flota,items:[]});if(!conos.get(k).items.find(x=>x.codigo===p.codigo))conos.get(k).items.push(p);});});
   if(!conos.size){cont.innerHTML='<div class="empty">No hay conos con anclaje en esta ventana.</div>';return;}
   let rows='';let idx=0;
-  const sorted=[...conos.entries()].sort((a,b)=>{
-    const am=a[1].items.filter(p=>p.tmsCat!=='dispatched').length, bm=b[1].items.filter(p=>p.tmsCat!=='dispatched').length;
-    return bm-am;
-  });
-  sorted.forEach(([cono,info])=>{
-    const items=info.items; const total=items.length;
-    const migr=items.filter(p=>p.tmsCat==='dispatched').length;
-    const noMigr=total-migr; const pct=Math.round(migr/total*100);
-    let estado,fill;
-    if(migr===0){estado='<span class="badge b-warn">Pendiente</span>';fill='';}
-    else if(noMigr===0){estado='<span class="badge b-ok">Completo</span>';fill='full';}
-    else{estado=`<span class="badge b-alert">${noMigr} sin migrar</span>`;fill='warn';}
+  [...conos.entries()].sort((a,b)=>{const am=a[1].items.filter(p=>p.tmsCat!=='dispatched').length,bm=b[1].items.filter(p=>p.tmsCat!=='dispatched').length;return bm-am;}).forEach(([cono,info])=>{
+    const items=info.items,total=items.length,migr=items.filter(p=>p.tmsCat==='dispatched').length,noMigr=total-migr,pct=Math.round(migr/total*100);
+    const estado=migr===0?'<span class="badge b-warn">Pendiente</span>':noMigr===0?'<span class="badge b-ok">Completo</span>':`<span class="badge b-alert">${noMigr} sin migrar</span>`;
+    const fill=noMigr===0?'full':migr===0?'':'warn';
     const id='cn'+(idx++);
-    rows+=`<tr class="cono-row" onclick="toggleCono('${id}',this)" style="cursor:pointer">
-      <td><span class="mono" style="font-weight:600">${cono}</span></td>
-      <td><span class="flota-tag">${info.flota.replace('VANS RUTEO ','')}</span></td>
-      <td>${total}</td><td>${migr}</td>
-      <td><div class="progress"><div class="prog-bar"><div class="prog-fill ${fill}" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--muted)">${pct}%</span></div></td>
-      <td>${noMigr?`<span style="color:var(--alert);font-weight:700">${noMigr}</span>`:'—'}</td>
-      <td>${estado}</td><td><span class="expand-icon">▶</span></td></tr>
-      <tr id="${id}" class="cono-expand hidden"><td colspan="8"><div class="cono-inner">
-      <table class="detail-table"><thead><tr><th>Código</th><th>Bultos</th><th>Estado TMS</th></tr></thead><tbody>
-      ${items.map(p=>{const bad=p.tmsCat!=='dispatched';return `<tr${bad?' style="background:#1a0f0f"':''}><td class="mono"${bad?' style="color:var(--alert)"':''}>${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td></tr>`;}).join('')}
-      </tbody></table></div></td></tr>`;
+    rows+=`<tr class="cono-row" onclick="toggleCono('${id}',this)" style="cursor:pointer"><td><span class="mono" style="font-weight:600">${cono}</span></td><td><span class="flota-tag">${info.flota.replace('VANS RUTEO ','')}</span></td><td>${total}</td><td>${migr}</td><td><div class="progress"><div class="prog-bar"><div class="prog-fill ${fill}" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--muted)">${pct}%</span></div></td><td>${noMigr?`<span style="color:var(--alert);font-weight:700">${noMigr}</span>`:'—'}</td><td>${estado}</td><td><span class="expand-icon">▶</span></td></tr><tr id="${id}" class="cono-expand hidden"><td colspan="8"><div class="cono-inner"><table class="detail-table"><thead><tr><th>Código</th><th>Bultos</th><th>TMS</th></tr></thead><tbody>${items.map(p=>`<tr${p.tmsCat!=='dispatched'?' style="background:#1a0f0f"':''}><td class="mono"${p.tmsCat!=='dispatched'?' style="color:var(--alert)"':''}>${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td></tr>`).join('')}</tbody></table></div></td></tr>`;
   });
-  cont.innerHTML=`<div class="table-card"><div class="table-toolbar"><span class="tt">Vista por cono <span style="color:var(--muted);font-weight:400">· ${conos.size} conos · solo VANS</span></span>
-    <button class="btn dl" style="font-size:12px" onclick="exportExcel()">⬇ Excel</button></div>
-    <table class="main"><thead><tr><th>Cono</th><th>Flota</th><th>Pedidos</th><th>Migrados</th><th>Progreso</th><th>Sin migrar</th><th>Estado</th><th></th></tr></thead>
-    <tbody>${rows}</tbody></table><div class="tfoot">Conos con pendientes primero · click para ver los pedidos</div></div>`;
+  cont.innerHTML=`<div class="table-card"><div class="table-toolbar"><span class="tt">Vista por cono <span style="color:var(--muted);font-weight:400">· ${conos.size} conos · solo VANS</span></span><button class="btn dl" onclick="exportExcel()">⬇ Excel</button></div><table class="main"><thead><tr><th>Cono</th><th>Flota</th><th>Pedidos</th><th>Migrados</th><th>Progreso</th><th>Sin migrar</th><th>Estado</th><th></th></tr></thead><tbody>${rows}</tbody></table><div class="tfoot">Conos con pendientes primero · click para ver pedidos</div></div>`;
 }
 
-/* ---------- export ---------- */
 function exportExcel(){
-  if(!RESULT){toast('Primero aplica el análisis',true);return;}
-  const data=[...RESULT.pedidos,...RESULT.sinRecep].map(p=>({
-    'Código':p.codigo,'Flota':p.flota,'Bultos':p.bultos||'',
-    'Recepción':p.recep?'Sí':'No','Etiquetado':p.etiq?'Sí':'No',
-    'Anclaje':(p.flota==='OF MOTORIZADOS')?'N/A':`${p.ancCount}/${p.bultos||0}`,
-    'Cono':p.cono||'','Estado TMS':p.tmsLabel||'Sin registro','Estado final':p.estado.label
-  }));
-  const ws=XLSX.utils.json_to_sheet(data);
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'Despacho');
+  if(!RESULT){toast('Aplica el análisis primero',true);return;}
+  const data=[...RESULT.pedidos,...RESULT.sinRecep].map(p=>({'Código':p.codigo,'Flota':p.flota,'Bultos':p.bultos||'','Recepción':p.recep?'Sí':'No','Etiquetado':p.etiq?'Sí':'No','Anclaje':p.flota==='OF MOTORIZADOS'?'N/A':`${p.ancCount}/${p.bultos||0}`,'Cono':p.cono||'','Estado TMS':p.tmsLabel||'Sin registro','Estado final':p.estado.label}));
+  const ws=XLSX.utils.json_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Despacho');
   XLSX.writeFile(wb,'torre_control_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
-/* ---------- UI helpers ---------- */
+/* ---- UI helpers ---- */
 function switchTab(name,el){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');el.classList.add('active');}
 function toggleFlota(id,h){const b=document.getElementById(id);const open=b.classList.contains('open');b.classList.toggle('open',!open);h.classList.toggle('expanded',!open);}
 function toggleCono(id,row){const e=document.getElementById(id);const open=!e.classList.contains('hidden');e.classList.toggle('hidden',open);row.classList.toggle('expanded',!open);}
 function setFlota(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');activeFlota=el.dataset.flota;if(RESULT)renderAll();}
+async function clearAll(){if(!confirm('¿Limpiar sesión?'))return;DATA={zeus:null,etiquetado:null,anclaje:null,tms:null};RESULT=null;await idbClear();['zeus','etiquetado','anclaje','tms'].forEach(k=>{document.getElementById('card-'+k).className='file-card';document.getElementById('status-'+k).textContent='Sin cargar';document.getElementById('rows-'+k).textContent='';});document.getElementById('tag-tms').textContent='';document.querySelectorAll('input[type=file]').forEach(i=>i.value='');document.getElementById('resultsArea').classList.add('hidden');document.getElementById('emptyState').classList.remove('hidden');document.getElementById('turnoLabel').textContent='';toast('Sesión limpiada');}
 
-async function clearAll(){
-  if(!confirm('¿Limpiar todos los archivos cargados?'))return;
-  DATA={zeus:null,etiquetado:null,anclaje:null,tms:null};RESULT=null;
-  await idbClear();
-  ['zeus','etiquetado','anclaje','tms'].forEach(k=>{document.getElementById('card-'+k).className='file-card';document.getElementById('status-'+k).textContent='Sin cargar';document.getElementById('rows-'+k).textContent='';});
-  document.querySelectorAll('input[type=file]').forEach(i=>i.value='');
-  document.getElementById('resultsArea').classList.add('hidden');
-  document.getElementById('emptyState').classList.remove('hidden');
-  document.getElementById('turnoLabel').textContent='';
-  toast('Sesión limpiada');
-}
-
-/* ---------- restaurar al abrir ---------- */
+/* ---- restaurar desde bytes guardados ---- */
 (async function restore(){
   for(const k of ['zeus','etiquetado','anclaje','tms']){
-    const p=await idbGet(k);
-    if(p){DATA[k]=p;const card=document.getElementById('card-'+k);card.classList.add('ok');document.getElementById('status-'+k).textContent='✓ Cargado (guardado)';const n=Math.max(0,p.rows.length-(k==='tms'?0:1));document.getElementById('rows-'+k).textContent=n+' filas';}
+    try{
+      const buf=await idbGet(k+'_buf');
+      const name=await idbGet(k+'_name');
+      if(!buf||!name)continue;
+      let rows;
+      if(k==='tms')rows=await parseTMSFromBuf(buf,name);
+      else rows=readExcel(buf);
+      DATA[k]={rows,name};
+      document.getElementById('card-'+k).classList.add('ok');
+      document.getElementById('status-'+k).textContent='✓ Cargado';
+      document.getElementById('rows-'+k).textContent=Math.max(0,rows.length-(k==='tms'?0:1))+' filas';
+      if(k==='tms'&&name.toLowerCase().endsWith('.zip'))document.getElementById('tag-tms').textContent='ZIP → CSV';
+    }catch(e){/* ignorar error de restauración */}
   }
   autoSuggestWindow();
 })();
