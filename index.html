@@ -8,13 +8,7 @@
 <script src="https://unpkg.com/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
-:root{
-  --bg:#0f1419;--panel:#161c24;--panel2:#1c2530;--line:#27313d;
-  --txt:#e6edf3;--muted:#8b98a5;--accent:#4d9fff;
-  --ok:#2ea043;--okbg:#0f2417;--warn:#d29922;--warnbg:#241c08;
-  --alert:#f85149;--alertbg:#2a0f0f;--orange:#e8892b;--orangebg:#251608;
-  --gray:#8b98a5;--graybg:#1a2130;--purple:#c084fc;--purplebg:#1a0a2a;
-}
+:root{--bg:#0f1419;--panel:#161c24;--panel2:#1c2530;--line:#27313d;--txt:#e6edf3;--muted:#8b98a5;--accent:#4d9fff;--ok:#2ea043;--okbg:#0f2417;--warn:#d29922;--warnbg:#241c08;--alert:#f85149;--alertbg:#2a0f0f;--orange:#e8892b;--orangebg:#251608;--gray:#8b98a5;--graybg:#1a2130;--purple:#c084fc;--purplebg:#1a0a2a;}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);font-size:14px;line-height:1.5;padding:20px}
 .wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
@@ -28,6 +22,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn{font-size:12px;padding:7px 13px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--txt);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .btn:hover{border-color:var(--accent)}.btn.danger{background:var(--alertbg);border-color:var(--alert);color:var(--alert)}
 .btn.dl{background:var(--okbg);border-color:var(--ok);color:var(--ok)}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.diag{background:var(--warnbg);border-color:var(--warn);color:var(--warn)}
 .config-row{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .config-row label{font-size:12px;color:var(--muted)}
 .config-row input{background:var(--panel2);border:1px solid var(--line);color:var(--txt);font-size:13px;padding:6px 10px;border-radius:6px;outline:none}
@@ -41,6 +36,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .file-card .frows{font-size:11px;color:var(--muted);margin-top:3px;min-height:14px}
 .file-card .ftag{font-size:10px;margin-top:4px;color:var(--accent)}
 .file-card input[type=file]{font-size:11px;color:var(--muted);width:100%;margin-top:8px}
+/* DIAGNÓSTICO */
+.diag-panel{background:var(--panel);border:1px solid var(--warn);border-radius:10px;padding:14px 16px}
+.diag-panel h3{font-size:13px;font-weight:600;color:var(--warn);margin-bottom:12px}
+.diag-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.diag-block{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.diag-block h4{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.diag-row{display:flex;justify-content:space-between;font-size:12px;padding:2px 0;border-bottom:1px solid var(--line)}
+.diag-row:last-child{border-bottom:none}
+.diag-row .lbl{color:var(--muted)}.diag-row .val{color:var(--txt);font-family:monospace;font-size:11px;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.diag-row .val.ok{color:var(--ok)}.diag-row .val.alert{color:var(--alert)}.diag-row .val.warn{color:var(--warn)}
+.overlap-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--line)}
+.overlap-row:last-child{border-bottom:none}
+/* RESTO */
 .filter-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .filter-row .lbl{font-size:12px;color:var(--muted)}
 .chip{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--line);background:var(--panel);color:var(--muted);cursor:pointer}
@@ -65,8 +73,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .pipe-stage.has-missing .ps-sub{color:var(--alert)}.pipe-stage.all-ok .ps-sub{color:var(--ok)}.pipe-stage.na-stage{opacity:.4}
 .pipe-arrow{color:var(--line);font-size:16px}
 .flota-badges{display:flex;gap:6px;flex-wrap:wrap}
-.flota-expand-body{display:none;border-top:1px solid var(--line)}
-.flota-expand-body.open{display:block}
+.flota-expand-body{display:none;border-top:1px solid var(--line)}.flota-expand-body.open{display:block}
 .flota-section{padding:10px 16px 4px}
 .flota-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .flota-section-title .sc{width:6px;height:6px;border-radius:50%}
@@ -78,12 +85,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .expand-icon{font-size:11px;color:var(--muted);transition:transform .2s;display:inline-block}
 .expanded .expand-icon{transform:rotate(90deg)}
 .badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block;white-space:nowrap}
-.b-ok{background:var(--okbg);color:var(--ok);border:1px solid #1a4a25}
-.b-warn{background:var(--warnbg);color:var(--warn);border:1px solid #4a3a0a}
-.b-alert{background:var(--alertbg);color:var(--alert);border:1px solid #4a1515}
-.b-orange{background:var(--orangebg);color:var(--orange);border:1px solid #4a2a08}
-.b-gray{background:var(--graybg);color:var(--gray);border:1px solid var(--line)}
-.b-priority{background:var(--purplebg);color:var(--purple);border:1px solid #6b3fa0}
+.b-ok{background:var(--okbg);color:var(--ok);border:1px solid #1a4a25}.b-warn{background:var(--warnbg);color:var(--warn);border:1px solid #4a3a0a}
+.b-alert{background:var(--alertbg);color:var(--alert);border:1px solid #4a1515}.b-orange{background:var(--orangebg);color:var(--orange);border:1px solid #4a2a08}
+.b-gray{background:var(--graybg);color:var(--gray);border:1px solid var(--line)}.b-priority{background:var(--purplebg);color:var(--purple);border:1px solid #6b3fa0}
 .stage{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:22px;border-radius:5px;font-size:12px;font-weight:700;padding:0 5px}
 .s-ok{background:var(--okbg);color:var(--ok)}.s-no{background:var(--alertbg);color:var(--alert)}
 .s-na{background:var(--graybg);color:var(--muted);font-size:10px}.s-part{background:var(--warnbg);color:var(--warn)}
@@ -95,8 +99,7 @@ table.main{width:100%;border-collapse:collapse}
 table.main th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
 table.main td{padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle}
 table.main tbody tr:hover td{background:var(--panel2)}
-.cono-expand td{padding:0;background:#10171f}
-.cono-inner{padding:10px 16px}
+.cono-expand td{padding:0;background:#10171f}.cono-inner{padding:10px 16px}
 .progress{display:flex;align-items:center;gap:8px}
 .prog-bar{flex:1;height:6px;background:var(--line);border-radius:3px;overflow:hidden;min-width:60px;max-width:120px}
 .prog-fill{height:100%;border-radius:3px;background:var(--ok)}.prog-fill.warn{background:var(--warn)}
@@ -114,9 +117,11 @@ table.main tbody tr:hover td{background:var(--panel2)}
     <div class="logo"><div class="live-dot"></div><h1>Torre de Control · Despacho Nocturno</h1></div>
     <div class="header-right">
       <span id="turnoLabel" style="font-size:12px;color:var(--muted)"></span>
+      <button class="btn diag" onclick="toggleDiag()">🔍 Diagnóstico</button>
       <button class="btn danger" onclick="clearAll()">⊗ Limpiar</button>
     </div>
   </div>
+
   <div class="config-row">
     <span style="font-size:12px;color:var(--muted);font-weight:500">Ventana de análisis</span>
     <label>Desde</label><input type="datetime-local" id="desde" style="width:200px">
@@ -124,12 +129,20 @@ table.main tbody tr:hover td{background:var(--panel2)}
     <label>Hasta</label><input type="datetime-local" id="hasta" style="width:200px">
     <button class="btn primary" onclick="runAnalysis()">Aplicar</button>
   </div>
+
   <div class="files">
     <div class="file-card" id="card-zeus"><div class="fname">Archivo 1 — Zeus</div><div class="fstatus" id="status-zeus">Sin cargar</div><div class="frows" id="rows-zeus"></div><input type="file" accept=".xlsx,.xls" onchange="onFile('zeus',this)"></div>
     <div class="file-card" id="card-etiquetado"><div class="fname">Archivo 2 — Etiquetado</div><div class="fstatus" id="status-etiquetado">Sin cargar</div><div class="frows" id="rows-etiquetado"></div><input type="file" accept=".xlsx,.xls" onchange="onFile('etiquetado',this)"></div>
     <div class="file-card" id="card-anclaje"><div class="fname">Archivo 3 — Anclaje</div><div class="fstatus" id="status-anclaje">Sin cargar</div><div class="frows" id="rows-anclaje"></div><input type="file" accept=".xlsx,.xls" onchange="onFile('anclaje',this)"></div>
     <div class="file-card" id="card-tms"><div class="fname">Archivo 4 — TMS</div><div class="fstatus" id="status-tms">Sin cargar</div><div class="frows" id="rows-tms"></div><div class="ftag" id="tag-tms"></div><input type="file" accept=".zip,.csv,.xlsx,.xls" onchange="onFile('tms',this)"></div>
   </div>
+
+  <!-- PANEL DIAGNÓSTICO -->
+  <div class="diag-panel hidden" id="diagPanel">
+    <h3>🔍 Diagnóstico de cruces</h3>
+    <div class="diag-grid" id="diagContent"></div>
+  </div>
+
   <div id="resultsArea" class="hidden">
     <div class="filter-row" style="margin-bottom:14px">
       <span class="lbl">Flota:</span>
@@ -154,37 +167,41 @@ table.main tbody tr:hover td{background:var(--panel2)}
 
 <script>
 /* ============================================================
-   CONFIGURACIÓN — ajusta aquí si cambian posiciones de columnas
-   Índices: A=0 B=1 C=2 D=3 E=4 F=5 G=6 H=7 I=8 J=9 K=10 L=11 M=12 N=13 T=19
+   CONFIGURACIÓN
+   Excel: índice de columna (A=0, B=1 ... E=4, G=6, K=10, M=12, T=19)
+   TMS CSV: usa NOMBRES NORMALIZADOS (sin tildes, mayúsculas)
    ============================================================ */
 const COLS = {
   zeus:       { codigo:0, flota:4, tipoRecep:12, bultos:19, fecha:6 },
   etiquetado: { codigo:0, fecha:4 },
   anclaje:    { codigo:0, cono:4, fecha:10 },
-  tms:        { codigo:'número', estado:'nombreEstadoEnvio', fecha:'enReparto' }
+  // TMS: los nombres se normalizan automáticamente al leer el CSV
+  // norm('número') = 'NUMERO', norm('nombreEstadoEnvio') = 'NOMBREESTADOENVIO'
+  tms:{ codigo:'NUMERO', estado:'NOMBREESTADOENVIO', fecha:'ENREPARTO' }
 };
-const FLOTAS_VALIDAS = ['OF MOTORIZADOS','VANS RUTEO DINAMICO','VANS RUTEO ESTATICO'];
+const FLOTAS = ['OF MOTORIZADOS','VANS RUTEO DINAMICO','VANS RUTEO ESTATICO'];
 const TMS_MAP = {
-  'EN REPARTO':         {cat:'dispatched', label:'En reparto'},
-  'ENTREGADO':          {cat:'dispatched', label:'Entregado'},
-  'EN BODEGA CROSSDOCK':{cat:'pending',    label:'En bodega'},
-  'REENVIO CLIENTE':    {cat:'pending',    label:'Reenvío'},
-  'REGISTRADO':         {cat:'review',     label:'Registrado'},
-  'CUARENTENA':         {cat:'quarantine', label:'Cuarentena'}
+  'EN REPARTO':{cat:'dispatched',label:'En reparto'},
+  'ENTREGADO':{cat:'dispatched',label:'Entregado'},
+  'EN BODEGA CROSSDOCK':{cat:'pending',label:'En bodega'},
+  'REENVIO CLIENTE':{cat:'pending',label:'Reenvío'},
+  'REGISTRADO':{cat:'review',label:'Registrado'},
+  'CUARENTENA':{cat:'quarantine',label:'Cuarentena'}
 };
-const CATBADGE = {ok:'b-ok',warn:'b-warn',alert:'b-alert',orange:'b-orange',priority:'b-priority',gray:'b-gray'};
+const CATBADGE={ok:'b-ok',warn:'b-warn',alert:'b-alert',orange:'b-orange',priority:'b-priority',gray:'b-gray'};
 
-let DATA = {zeus:null,etiquetado:null,anclaje:null,tms:null};
-let RESULT = null;
-let activeFlota = '__all__';
+let DATA={zeus:null,etiquetado:null,anclaje:null,tms:null};
+let RESULT=null;
+let activeFlota='__all__';
 
-/* ---- utilidades ---- */
-function norm(s){return (s==null?'':s.toString()).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+/* ---- utils ---- */
+function norm(s){return(s==null?'':s.toString()).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');}
+function normCode(s){return(s==null?'':s.toString()).trim();}  // códigos: solo trim, conservar formato
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',3500);}
 function toNaive(v){
   if(v==null||v==='')return null;
-  if(typeof v==='number'){return Date.UTC(1899,11,30)+Math.round(v*86400000);}
-  if(v instanceof Date){return Date.UTC(v.getFullYear(),v.getMonth(),v.getDate(),v.getHours(),v.getMinutes(),v.getSeconds());}
+  if(typeof v==='number')return Date.UTC(1899,11,30)+Math.round(v*86400000);
+  if(v instanceof Date)return Date.UTC(v.getFullYear(),v.getMonth(),v.getDate(),v.getHours(),v.getMinutes(),v.getSeconds());
   const s=v.toString().trim();
   let m=s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
   if(m)return Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0));
@@ -194,9 +211,9 @@ function toNaive(v){
   if(m)return Date.UTC(+m[1],+m[2]-1,+m[3]);
   const d=new Date(s);return isNaN(d)?null:Date.UTC(d.getFullYear(),d.getMonth(),d.getDate(),d.getHours(),d.getMinutes());
 }
-function inputToNaive(str){if(!str)return null;const [date,time]=str.split('T');const [y,mo,da]=date.split('-').map(Number);const [h,mi]=(time||'0:0').split(':').map(Number);return Date.UTC(y,mo-1,da,h||0,mi||0);}
+function inputToNaive(str){if(!str)return null;const[date,time]=str.split('T');const[y,mo,da]=date.split('-').map(Number);const[h,mi]=(time||'0:0').split(':').map(Number);return Date.UTC(y,mo-1,da,h||0,mi||0);}
 
-/* ---- IndexedDB — guarda BYTES CRUDOS, no objetos parseados ---- */
+/* ---- IndexedDB — guarda ArrayBuffer crudo ---- */
 const DB='torre_control',ST='files';
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=e=>e.target.result.createObjectStore(ST);r.onsuccess=e=>res(e.target.result);r.onerror=()=>rej(r.error);});}
 async function idbSet(k,v){try{const db=await idb();return new Promise(res=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>res();});}catch(e){}}
@@ -209,7 +226,15 @@ function readExcel(buf){
   const sheet=wb.Sheets[wb.SheetNames[0]];
   return XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:null});
 }
-function readCSV(text){return Papa.parse(text,{header:true,skipEmptyLines:true}).data;}
+function readCSV(text){
+  const out=Papa.parse(text,{header:true,skipEmptyLines:true});
+  // NORMALIZAR TODAS LAS CLAVES DEL CSV → soluciona el problema de tildes/mayúsculas
+  return out.data.map(row=>{
+    const n={};
+    for(const[k,v]of Object.entries(row))n[norm(k)]=v;
+    return n;
+  });
+}
 async function parseTMSFromBuf(buf,name){
   if(name.toLowerCase().endsWith('.zip')){
     const zip=await JSZip.loadAsync(buf);
@@ -221,7 +246,7 @@ async function parseTMSFromBuf(buf,name){
   return readCSV(new TextDecoder('utf-8').decode(buf));
 }
 
-/* ---- carga de archivos ---- */
+/* ---- carga ---- */
 async function onFile(kind,input){
   const file=input.files[0]; if(!file)return;
   const card=document.getElementById('card-'+kind);
@@ -231,19 +256,20 @@ async function onFile(kind,input){
   try{
     const buf=await file.arrayBuffer();
     let rows;
-    if(kind==='tms'){rows=await parseTMSFromBuf(buf,file.name);}
-    else{rows=readExcel(buf);}
+    if(kind==='tms')rows=await parseTMSFromBuf(buf,file.name);
+    else rows=readExcel(buf);
     DATA[kind]={rows,name:file.name};
     card.classList.add('ok'); st.textContent='✓ Cargado';
     const n=Math.max(0,rows.length-(kind==='tms'?0:1));
     rw.textContent=n+' filas';
-    if(kind==='tms'&&file.name.toLowerCase().endsWith('.zip')){document.getElementById('tag-tms').textContent='ZIP → CSV';}
-    // guardar bytes crudos (ArrayBuffer es clonable sin problemas)
-    await idbSet(kind+'_buf', buf);
-    await idbSet(kind+'_name', file.name);
+    if(kind==='tms'&&file.name.toLowerCase().endsWith('.zip'))document.getElementById('tag-tms').textContent='ZIP → CSV';
+    await idbSet(kind+'_buf',buf);
+    await idbSet(kind+'_name',file.name);
     autoSuggestWindow();
+    // actualizar diagnóstico si está visible
+    if(!document.getElementById('diagPanel').classList.contains('hidden'))renderDiag();
   }catch(e){
-    card.classList.add('err'); st.textContent='✕ Error'; rw.textContent=e.message||'No se pudo leer';
+    card.classList.add('err'); st.textContent='✕ Error'; rw.textContent=e.message||'Error';
     toast('Error '+kind+': '+(e.message||e),true); DATA[kind]=null;
   }
 }
@@ -256,9 +282,87 @@ function autoSuggestWindow(){
   let max=null;
   for(let i=1;i<src.rows.length;i++){const t=toNaive(src.rows[i]?src.rows[i][col]:null);if(t&&(!max||t>max))max=t;}
   if(!max)return;
-  const fmt=t=>{const dt=new Date(t);return `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}T${String(dt.getUTCHours()).padStart(2,'0')}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;};
+  const fmt=t=>{const dt=new Date(t);return`${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}T${String(dt.getUTCHours()).padStart(2,'0')}:${String(dt.getUTCMinutes()).padStart(2,'0')}`;};
   if(!h.value)h.value=fmt(max);
   if(!d.value)d.value=fmt(max-14*3600000);
+}
+
+/* ---- DIAGNÓSTICO ---- */
+function toggleDiag(){
+  const p=document.getElementById('diagPanel');
+  if(p.classList.contains('hidden')){p.classList.remove('hidden');renderDiag();}
+  else p.classList.add('hidden');
+}
+function getSampleCodes(kind,n=5){
+  const d=DATA[kind]; if(!d)return[];
+  const col=kind==='tms'?COLS.tms.codigo:COLS[kind].codigo;
+  const codes=[];
+  const startI=kind==='tms'?0:1;
+  for(let i=startI;i<d.rows.length&&codes.length<n;i++){
+    const r=d.rows[i]; if(!r)continue;
+    const v=kind==='tms'?r[col]:r[col];
+    if(v!=null&&v!=='')codes.push(normCode(v));
+  }
+  return codes;
+}
+function renderDiag(){
+  const cont=document.getElementById('diagContent');
+  // Bloque por archivo
+  const kinds=['zeus','etiquetado','anclaje','tms'];
+  const labels={zeus:'Zeus',etiquetado:'Etiquetado',anclaje:'Anclaje',tms:'TMS'};
+  let html='';
+  kinds.forEach(k=>{
+    const d=DATA[k];
+    const samples=getSampleCodes(k,5);
+    const headerInfo=k==='tms'&&d?'(CSV — claves normalizadas)':(d&&d.rows[0]?`Fila 1: "${(d.rows[0][COLS[k]?.codigo??0]||'').toString().slice(0,30)}"`:'-');
+    html+=`<div class="diag-block"><h4>${labels[k]}</h4>
+      <div class="diag-row"><span class="lbl">Estado</span><span class="val ${d?'ok':'alert'}">${d?'✓ Cargado':'✕ Sin cargar'}</span></div>
+      <div class="diag-row"><span class="lbl">Total filas</span><span class="val">${d?Math.max(0,d.rows.length-(k==='tms'?0:1)):'-'}</span></div>
+      <div class="diag-row"><span class="lbl">Header/info</span><span class="val">${headerInfo}</span></div>
+      <div class="diag-row"><span class="lbl">Col. código</span><span class="val">${k==='tms'?COLS.tms.codigo:'Col '+String.fromCharCode(65+(COLS[k]?.codigo??0))}</span></div>
+      <div class="diag-row"><span class="lbl">Muestra códigos</span><span class="val">${samples.length?samples.slice(0,3).join(' | '):'(vacío)'}</span></div>
+    </div>`;
+  });
+  // Bloque de overlap
+  html+=`<div class="diag-block"><h4>Cruce de códigos</h4>`;
+  if(DATA.zeus&&DATA.etiquetado){
+    const zSet=new Set();const eSet=new Set();
+    for(let i=1;i<DATA.zeus.rows.length;i++){const v=DATA.zeus.rows[i]?.[COLS.zeus.codigo];if(v)zSet.add(normCode(v));}
+    for(let i=1;i<DATA.etiquetado.rows.length;i++){const v=DATA.etiquetado.rows[i]?.[COLS.etiquetado.codigo];if(v)eSet.add(normCode(v));}
+    const overlap=[...zSet].filter(c=>eSet.has(c)).length;
+    html+=`<div class="diag-row"><span class="lbl">Zeus ∩ Etiquetado</span><span class="val ${overlap>0?'ok':'alert'}">${overlap} códigos coinciden</span></div>`;
+  }
+  if(DATA.zeus&&DATA.anclaje){
+    const zSet=new Set();const aSet=new Set();
+    for(let i=1;i<DATA.zeus.rows.length;i++){const v=DATA.zeus.rows[i]?.[COLS.zeus.codigo];if(v)zSet.add(normCode(v));}
+    for(let i=1;i<DATA.anclaje.rows.length;i++){const v=DATA.anclaje.rows[i]?.[COLS.anclaje.codigo];if(v)aSet.add(normCode(v));}
+    const overlap=[...zSet].filter(c=>aSet.has(c)).length;
+    html+=`<div class="diag-row"><span class="lbl">Zeus ∩ Anclaje</span><span class="val ${overlap>0?'ok':'alert'}">${overlap} códigos coinciden</span></div>`;
+  }
+  if(DATA.zeus&&DATA.tms){
+    const zSet=new Set();const tSet=new Set();
+    for(let i=1;i<DATA.zeus.rows.length;i++){const v=DATA.zeus.rows[i]?.[COLS.zeus.codigo];if(v)zSet.add(normCode(v));}
+    for(const r of DATA.tms.rows){const v=r[COLS.tms.codigo];if(v)tSet.add(normCode(v));}
+    const overlap=[...zSet].filter(c=>tSet.has(c)).length;
+    html+=`<div class="diag-row"><span class="lbl">Zeus ∩ TMS</span><span class="val ${overlap>0?'ok':'alert'}">${overlap} códigos coinciden</span></div>`;
+    // Mostrar muestra de claves TMS detectadas
+    const tmsKeys=DATA.tms.rows.length?Object.keys(DATA.tms.rows[0]).slice(0,6).join(', '):'';
+    html+=`<div class="diag-row"><span class="lbl">Claves TMS (norm)</span><span class="val">${tmsKeys.slice(0,60)}</span></div>`;
+  }
+  html+='</div>';
+  // Bloque fechas
+  html+=`<div class="diag-block"><h4>Ventana de fechas</h4>`;
+  const desde=inputToNaive(document.getElementById('desde').value);
+  const hasta=inputToNaive(document.getElementById('hasta').value);
+  html+=`<div class="diag-row"><span class="lbl">Desde</span><span class="val ${desde?'ok':'alert'}">${desde?new Date(desde).toISOString().slice(0,16).replace('T',' '):'No definido'}</span></div>`;
+  html+=`<div class="diag-row"><span class="lbl">Hasta</span><span class="val ${hasta?'ok':'alert'}">${hasta?new Date(hasta).toISOString().slice(0,16).replace('T',' '):'No definido'}</span></div>`;
+  if(DATA.anclaje){
+    let cntIn=0,cntOut=0;
+    for(let i=1;i<DATA.anclaje.rows.length;i++){const t=toNaive(DATA.anclaje.rows[i]?.[COLS.anclaje.fecha]);if(!t)continue;if(desde&&hasta&&t>=desde&&t<=hasta)cntIn++;else cntOut++;}
+    html+=`<div class="diag-row"><span class="lbl">Anclaje en ventana</span><span class="val ${cntIn>0?'ok':'alert'}">${cntIn} de ${cntIn+cntOut}</span></div>`;
+  }
+  html+='</div>';
+  cont.innerHTML=html;
 }
 
 /* ---- motor ---- */
@@ -267,10 +371,11 @@ function buildIndex(data,colMap,win,isTMS){
   const rows=data.rows;
   for(let i=isTMS?0:1;i<rows.length;i++){
     const r=rows[i]; if(!r)continue;
-    const rawCod=isTMS?r[colMap.codigo]:r[colMap.codigo];
+    const rawCod=r[colMap.codigo];
     if(rawCod==null||rawCod==='')continue;
-    const key=rawCod.toString().trim();
-    const t=toNaive(isTMS?r[colMap.fecha]:r[colMap.fecha]);
+    const key=normCode(rawCod);
+    if(!key)continue;
+    const t=toNaive(r[colMap.fecha]);
     if(!isTMS&&win){if(t==null||t<win.start||t>win.end)continue;}
     if(!map.has(key))map.set(key,[]);
     map.get(key).push({t,raw:r});
@@ -300,14 +405,14 @@ function runAnalysis(){
   const ancIdx=buildIndex(DATA.anclaje,COLS.anclaje,win,false);
   const tmsIdx=buildIndex(DATA.tms,COLS.tms,null,true);
   const pedidos=[]; const zeusSet=new Set();
-  for(const [cod,regs] of zeusIdx){
+  for(const[cod,regs]of zeusIdx){
     const z=latest(regs);
     const flotaN=norm(z.raw[COLS.zeus.flota]);
-    if(!FLOTAS_VALIDAS.includes(flotaN))continue;
+    if(!FLOTAS.includes(flotaN))continue;
     zeusSet.add(cod);
     const bultos=parseInt(z.raw[COLS.zeus.bultos])||1;
     const eti=etiIdx.get(cod); const anc=ancIdx.get(cod)||[]; const tms=tmsIdx.get(cod);
-    const tmsI=tms?TMS_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:tms[0].raw[COLS.tms.estado]||'?'}:null;
+    const tmsI=tms?TMS_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:(tms[0].raw[COLS.tms.estado]||'?')}:null;
     const ancRec=anc.length?latest(anc):null;
     const p={codigo:cod,flota:flotaN,bultos,recep:true,etiq:!!eti,ancCount:anc.length,cono:ancRec?ancRec.raw[COLS.anclaje.cono]:null,tmsCat:tmsI?tmsI.cat:null,tmsLabel:tmsI?tmsI.label:null,ancRows:anc};
     p.estado=computeEstado(p); pedidos.push(p);
@@ -316,7 +421,7 @@ function runAnalysis(){
   const addOrphan=cod=>{
     if(zeusSet.has(cod)||seen.has(cod))return; seen.add(cod);
     const eti=etiIdx.get(cod); const anc=ancIdx.get(cod)||[]; const tms=tmsIdx.get(cod);
-    const tmsI=tms?TMS_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:tms[0].raw[COLS.tms.estado]||'?'}:null;
+    const tmsI=tms?TMS_MAP[norm(tms[0].raw[COLS.tms.estado])]||{cat:'review',label:(tms[0].raw[COLS.tms.estado]||'?')}:null;
     sinRecep.push({codigo:cod,flota:'—',etiq:!!eti,ancCount:anc.length,cono:anc.length?latest(anc).raw[COLS.anclaje.cono]:null,tmsCat:tmsI?tmsI.cat:null,tmsLabel:tmsI?tmsI.label:null,estado:{label:'Sin recepción',cat:'alert'},ancRows:anc});
   };
   for(const cod of etiIdx.keys())addOrphan(cod);
@@ -326,7 +431,8 @@ function runAnalysis(){
   document.getElementById('emptyState').classList.add('hidden');
   document.getElementById('resultsArea').classList.remove('hidden');
   renderAll();
-  toast(pedidos.length+' pedidos analizados'+( sinRecep.length?` · ${sinRecep.length} sin recepción`:''));
+  toast(pedidos.length+' pedidos'+(sinRecep.length?` · ${sinRecep.length} sin recepción`:''));
+  if(!document.getElementById('diagPanel').classList.contains('hidden'))renderDiag();
 }
 
 /* ---- render ---- */
@@ -334,10 +440,8 @@ function tmsBadge(p){if(!p.tmsCat)return'<span class="badge b-gray">Sin registro
 function stageCell(ok){return ok?'<span class="stage s-ok">✓</span>':'<span class="stage s-no">✕</span>';}
 function renderAll(){renderTurno();renderKPIs();renderPedidos();renderConos();}
 function renderTurno(){const w=RESULT.win;const f=t=>{const d=new Date(t);return`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;};document.getElementById('turnoLabel').textContent=`Ventana: ${f(w.start)} → ${f(w.end)}`;}
-function renderKPIs(){const ps=activeFlota==='__all__'?RESULT.pedidos:RESULT.pedidos.filter(p=>p.flota===activeFlota);const c={ok:0,warn:0,alert:0,priority:0};ps.forEach(p=>c[p.estado.cat]=(c[p.estado.cat]||0)+1);document.getElementById('kpis').innerHTML=`<div class="kpi"><div class="kn">${ps.length}</div><div class="kl">Pedidos en ventana</div></div><div class="kpi ok"><div class="kn">${c.ok}</div><div class="kl">Despachados</div></div><div class="kpi warn"><div class="kn">${c.warn}</div><div class="kl">En proceso</div></div><div class="kpi alert"><div class="kn">${c.alert}</div><div class="kl">Alertas</div></div><div class="kpi orange"><div class="kn">${c.priority}</div><div class="kl">Cuarentena</div></div>`;}
-
+function renderKPIs(){const ps=activeFlota==='__all__'?RESULT.pedidos:RESULT.pedidos.filter(p=>p.flota===activeFlota);const c={ok:0,warn:0,alert:0,priority:0};ps.forEach(p=>c[p.estado.cat]=(c[p.estado.cat]||0)+1);document.getElementById('kpis').innerHTML=`<div class="kpi"><div class="kn">${ps.length}</div><div class="kl">Pedidos en ventana</div></div><div class="kpi ok"><div class="kn">${c.ok||0}</div><div class="kl">Despachados</div></div><div class="kpi warn"><div class="kn">${c.warn||0}</div><div class="kl">En proceso</div></div><div class="kpi alert"><div class="kn">${c.alert||0}</div><div class="kl">Alertas</div></div><div class="kpi orange"><div class="kn">${c.priority||0}</div><div class="kl">Cuarentena</div></div>`;}
 function pipeStage(lbl,val,missing,na){if(na)return`<div class="pipe-stage na-stage"><div class="ps-label">${lbl}</div><div class="ps-val">N/A</div><div class="ps-sub">no aplica</div></div>`;const cls=missing>0?'has-missing':'all-ok';return`<div class="pipe-stage ${cls}"><div class="ps-label">${lbl}</div><div class="ps-val">${val}</div><div class="ps-sub">${missing>0?`faltan ${missing}`:'todos ✓'}</div></div>`;}
-
 function renderFlotaSections(ps,isVan){
   let h='';
   const sec=(title,color,rows,cols)=>{if(!rows.length)return'';return`<div class="flota-section"><div class="flota-section-title"><span class="sc" style="background:${color}"></span>${title} — ${rows.length}</div><table class="detail-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;};
@@ -345,15 +449,14 @@ function renderFlotaSections(ps,isVan){
   h+=sec('Sin etiquetar','var(--alert)',sinEti,['Código','Bultos','Recep','Etiq','TMS','Estado']);
   if(isVan){const sinAnc=ps.filter(p=>p.etiq&&p.ancCount<p.bultos).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td><span class="stage ${p.ancCount===0?'s-no':'s-part'}">${p.ancCount}/${p.bultos}</span></td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);h+=sec('Sin anclar / anclaje incompleto','var(--alert)',sinAnc,['Código','Bultos','Anclaje','TMS','Estado']);}
   const cuar=ps.filter(p=>p.estado.cat==='priority').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge b-priority">⚠ ${p.estado.label}</span></td></tr>`);
-  h+=sec('Cuarentena — no deben salir','var(--purple)',cuar,['Código','Bultos','TMS','Estado']);
+  h+=sec('Cuarentena','var(--purple)',cuar,['Código','Bultos','TMS','Estado']);
   const pend=ps.filter(p=>p.estado.cat==='warn'||p.estado.cat==='orange').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
   h+=sec('Pendiente TMS / revisar','var(--warn)',pend,['Código','Bultos','TMS','Estado']);
-  return h||'<div class="flota-section" style="color:var(--ok);padding-bottom:14px">✓ Todos los pedidos completos en esta ventana</div>';
+  return h||'<div class="flota-section" style="color:var(--ok);padding-bottom:14px">✓ Todos los pedidos completos</div>';
 }
-
 function renderPedidos(){
   const cont=document.getElementById('tab-pedidos');
-  const flotas=activeFlota==='__all__'?FLOTAS_VALIDAS:[activeFlota];
+  const flotas=activeFlota==='__all__'?FLOTAS:[activeFlota];
   let html='';
   flotas.forEach((fl,idx)=>{
     const ps=RESULT.pedidos.filter(p=>p.flota===fl);
@@ -367,25 +470,13 @@ function renderPedidos(){
     const id='f'+idx;
     html+=`<div class="flota-group"><div class="flota-header" onclick="toggleFlota('${id}',this)">
       <div class="flota-name"><span class="expand-icon">▶</span>${fl}<span class="flota-total">${ps.length} pedidos</span></div>
-      <div class="pipeline">
-        ${pipeStage('Recepción',ps.length,0)}<span class="pipe-arrow">→</span>
-        ${pipeStage('Etiquetado',etiqOk,ps.length-etiqOk)}<span class="pipe-arrow">→</span>
-        ${pipeStage('Anclaje',ancOk,isVan?ps.length-ancOk:0,!isVan)}<span class="pipe-arrow">→</span>
-        ${pipeStage('TMS',tmsOk,ps.length-tmsOk)}
-      </div>
-      <div class="flota-badges">
-        ${cuar?`<span class="badge b-priority">${cuar} cuarentena</span>`:''}
-        ${alerts?`<span class="badge b-alert">${alerts} alertas</span>`:''}
-        <span class="badge b-ok">${okc} ok</span>
-      </div></div>
+      <div class="pipeline">${pipeStage('Recepción',ps.length,0)}<span class="pipe-arrow">→</span>${pipeStage('Etiquetado',etiqOk,ps.length-etiqOk)}<span class="pipe-arrow">→</span>${pipeStage('Anclaje',ancOk,isVan?ps.length-ancOk:0,!isVan)}<span class="pipe-arrow">→</span>${pipeStage('TMS',tmsOk,ps.length-tmsOk)}</div>
+      <div class="flota-badges">${cuar?`<span class="badge b-priority">${cuar} cuarentena</span>`:''}${alerts?`<span class="badge b-alert">${alerts} alertas</span>`:''}<span class="badge b-ok">${okc} ok</span></div></div>
       <div id="${id}" class="flota-expand-body">${renderFlotaSections(ps,isVan)}</div></div>`;
   });
-  if(RESULT.sinRecep.length&&activeFlota==='__all__'){
-    html+=`<div class="flota-group"><div class="flota-header" onclick="toggleFlota('forphan',this)"><div class="flota-name"><span class="expand-icon">▶</span>Sin recepción<span class="flota-total">${RESULT.sinRecep.length} códigos</span></div><div class="pipeline" style="color:var(--muted);font-size:12px">Aparecen en etiquetado/anclaje/TMS pero no en Zeus</div><div class="flota-badges"><span class="badge b-alert">${RESULT.sinRecep.length} a revisar</span></div></div><div id="forphan" class="flota-expand-body"><div class="flota-section"><table class="detail-table"><thead><tr><th>Código</th><th>Etiq</th><th>Anclaje</th><th>TMS</th></tr></thead><tbody>${RESULT.sinRecep.slice(0,200).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${stageCell(p.etiq)}</td><td>${p.ancCount||'—'}</td><td>${tmsBadge(p)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
-  }
+  if(RESULT.sinRecep.length&&activeFlota==='__all__'){html+=`<div class="flota-group"><div class="flota-header" onclick="toggleFlota('forphan',this)"><div class="flota-name"><span class="expand-icon">▶</span>Sin recepción<span class="flota-total">${RESULT.sinRecep.length} códigos</span></div><div class="pipeline" style="color:var(--muted);font-size:12px">En etiquetado/anclaje/TMS pero no en Zeus</div><div class="flota-badges"><span class="badge b-alert">${RESULT.sinRecep.length} a revisar</span></div></div><div id="forphan" class="flota-expand-body"><div class="flota-section"><table class="detail-table"><thead><tr><th>Código</th><th>Etiq</th><th>Anclaje</th><th>TMS</th></tr></thead><tbody>${RESULT.sinRecep.slice(0,200).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${stageCell(p.etiq)}</td><td>${p.ancCount||'—'}</td><td>${tmsBadge(p)}</td></tr>`).join('')}</tbody></table></div></div></div>`;}
   cont.innerHTML=(html||'<div class="empty">Sin pedidos para esta flota en la ventana.</div>')+`<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px"><button class="btn dl" style="font-size:11px;padding:4px 10px" onclick="exportExcel()">⬇ Exportar Excel</button></div>`;
 }
-
 function renderConos(){
   const cont=document.getElementById('tab-conos');
   const conos=new Map();
@@ -393,16 +484,14 @@ function renderConos(){
   pool.forEach(p=>{if(p.flota==='OF MOTORIZADOS')return;p.ancRows.forEach(a=>{const c=a.raw[COLS.anclaje.cono];if(c==null||c==='')return;const k=c.toString().trim();if(!conos.has(k))conos.set(k,{flota:p.flota,items:[]});if(!conos.get(k).items.find(x=>x.codigo===p.codigo))conos.get(k).items.push(p);});});
   if(!conos.size){cont.innerHTML='<div class="empty">No hay conos con anclaje en esta ventana.</div>';return;}
   let rows='';let idx=0;
-  [...conos.entries()].sort((a,b)=>{const am=a[1].items.filter(p=>p.tmsCat!=='dispatched').length,bm=b[1].items.filter(p=>p.tmsCat!=='dispatched').length;return bm-am;}).forEach(([cono,info])=>{
+  [...conos.entries()].sort((a,b)=>b[1].items.filter(p=>p.tmsCat!=='dispatched').length-a[1].items.filter(p=>p.tmsCat!=='dispatched').length).forEach(([cono,info])=>{
     const items=info.items,total=items.length,migr=items.filter(p=>p.tmsCat==='dispatched').length,noMigr=total-migr,pct=Math.round(migr/total*100);
     const estado=migr===0?'<span class="badge b-warn">Pendiente</span>':noMigr===0?'<span class="badge b-ok">Completo</span>':`<span class="badge b-alert">${noMigr} sin migrar</span>`;
-    const fill=noMigr===0?'full':migr===0?'':'warn';
-    const id='cn'+(idx++);
-    rows+=`<tr class="cono-row" onclick="toggleCono('${id}',this)" style="cursor:pointer"><td><span class="mono" style="font-weight:600">${cono}</span></td><td><span class="flota-tag">${info.flota.replace('VANS RUTEO ','')}</span></td><td>${total}</td><td>${migr}</td><td><div class="progress"><div class="prog-bar"><div class="prog-fill ${fill}" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--muted)">${pct}%</span></div></td><td>${noMigr?`<span style="color:var(--alert);font-weight:700">${noMigr}</span>`:'—'}</td><td>${estado}</td><td><span class="expand-icon">▶</span></td></tr><tr id="${id}" class="cono-expand hidden"><td colspan="8"><div class="cono-inner"><table class="detail-table"><thead><tr><th>Código</th><th>Bultos</th><th>TMS</th></tr></thead><tbody>${items.map(p=>`<tr${p.tmsCat!=='dispatched'?' style="background:#1a0f0f"':''}><td class="mono"${p.tmsCat!=='dispatched'?' style="color:var(--alert)"':''}>${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td></tr>`).join('')}</tbody></table></div></td></tr>`;
+    const fill=noMigr===0?'full':migr===0?'':'warn'; const id='cn'+(idx++);
+    rows+=`<tr onclick="toggleCono('${id}',this)" style="cursor:pointer"><td><span class="mono" style="font-weight:600">${cono}</span></td><td><span class="flota-tag">${info.flota.replace('VANS RUTEO ','')}</span></td><td>${total}</td><td>${migr}</td><td><div class="progress"><div class="prog-bar"><div class="prog-fill ${fill}" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--muted)">${pct}%</span></div></td><td>${noMigr?`<span style="color:var(--alert);font-weight:700">${noMigr}</span>`:'—'}</td><td>${estado}</td><td><span class="expand-icon">▶</span></td></tr><tr id="${id}" class="cono-expand hidden"><td colspan="8"><div class="cono-inner"><table class="detail-table"><thead><tr><th>Código</th><th>Bultos</th><th>TMS</th></tr></thead><tbody>${items.map(p=>`<tr${p.tmsCat!=='dispatched'?' style="background:#1a0f0f"':''}><td class="mono"${p.tmsCat!=='dispatched'?' style="color:var(--alert)"':''}>${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td></tr>`).join('')}</tbody></table></div></td></tr>`;
   });
-  cont.innerHTML=`<div class="table-card"><div class="table-toolbar"><span class="tt">Vista por cono <span style="color:var(--muted);font-weight:400">· ${conos.size} conos · solo VANS</span></span><button class="btn dl" onclick="exportExcel()">⬇ Excel</button></div><table class="main"><thead><tr><th>Cono</th><th>Flota</th><th>Pedidos</th><th>Migrados</th><th>Progreso</th><th>Sin migrar</th><th>Estado</th><th></th></tr></thead><tbody>${rows}</tbody></table><div class="tfoot">Conos con pendientes primero · click para ver pedidos</div></div>`;
+  cont.innerHTML=`<div class="table-card"><div class="table-toolbar"><span class="tt">Vista por cono <span style="color:var(--muted);font-weight:400">· ${conos.size} conos</span></span><button class="btn dl" onclick="exportExcel()">⬇ Excel</button></div><table class="main"><thead><tr><th>Cono</th><th>Flota</th><th>Pedidos</th><th>Migrados</th><th>Progreso</th><th>Sin migrar</th><th>Estado</th><th></th></tr></thead><tbody>${rows}</tbody></table><div class="tfoot">Click para ver detalle del cono</div></div>`;
 }
-
 function exportExcel(){
   if(!RESULT){toast('Aplica el análisis primero',true);return;}
   const data=[...RESULT.pedidos,...RESULT.sinRecep].map(p=>({'Código':p.codigo,'Flota':p.flota,'Bultos':p.bultos||'','Recepción':p.recep?'Sí':'No','Etiquetado':p.etiq?'Sí':'No','Anclaje':p.flota==='OF MOTORIZADOS'?'N/A':`${p.ancCount}/${p.bultos||0}`,'Cono':p.cono||'','Estado TMS':p.tmsLabel||'Sin registro','Estado final':p.estado.label}));
@@ -410,19 +499,18 @@ function exportExcel(){
   XLSX.writeFile(wb,'torre_control_'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 
-/* ---- UI helpers ---- */
-function switchTab(name,el){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');el.classList.add('active');}
-function toggleFlota(id,h){const b=document.getElementById(id);const open=b.classList.contains('open');b.classList.toggle('open',!open);h.classList.toggle('expanded',!open);}
-function toggleCono(id,row){const e=document.getElementById(id);const open=!e.classList.contains('hidden');e.classList.toggle('hidden',open);row.classList.toggle('expanded',!open);}
+/* ---- UI ---- */
+function switchTab(n,el){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');el.classList.add('active');}
+function toggleFlota(id,h){const b=document.getElementById(id);b.classList.toggle('open',!b.classList.contains('open'));h.classList.toggle('expanded',!h.classList.contains('expanded'));}
+function toggleCono(id,row){const e=document.getElementById(id);e.classList.toggle('hidden');row.classList.toggle('expanded');}
 function setFlota(el){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');activeFlota=el.dataset.flota;if(RESULT)renderAll();}
-async function clearAll(){if(!confirm('¿Limpiar sesión?'))return;DATA={zeus:null,etiquetado:null,anclaje:null,tms:null};RESULT=null;await idbClear();['zeus','etiquetado','anclaje','tms'].forEach(k=>{document.getElementById('card-'+k).className='file-card';document.getElementById('status-'+k).textContent='Sin cargar';document.getElementById('rows-'+k).textContent='';});document.getElementById('tag-tms').textContent='';document.querySelectorAll('input[type=file]').forEach(i=>i.value='');document.getElementById('resultsArea').classList.add('hidden');document.getElementById('emptyState').classList.remove('hidden');document.getElementById('turnoLabel').textContent='';toast('Sesión limpiada');}
+async function clearAll(){if(!confirm('¿Limpiar sesión?'))return;DATA={zeus:null,etiquetado:null,anclaje:null,tms:null};RESULT=null;await idbClear();['zeus','etiquetado','anclaje','tms'].forEach(k=>{document.getElementById('card-'+k).className='file-card';document.getElementById('status-'+k).textContent='Sin cargar';document.getElementById('rows-'+k).textContent='';});document.getElementById('tag-tms').textContent='';document.querySelectorAll('input[type=file]').forEach(i=>i.value='');document.getElementById('resultsArea').classList.add('hidden');document.getElementById('emptyState').classList.remove('hidden');document.getElementById('turnoLabel').textContent='';document.getElementById('diagPanel').classList.add('hidden');toast('Sesión limpiada');}
 
 /* ---- restaurar desde bytes guardados ---- */
 (async function restore(){
   for(const k of ['zeus','etiquetado','anclaje','tms']){
     try{
-      const buf=await idbGet(k+'_buf');
-      const name=await idbGet(k+'_name');
+      const buf=await idbGet(k+'_buf'); const name=await idbGet(k+'_name');
       if(!buf||!name)continue;
       let rows;
       if(k==='tms')rows=await parseTMSFromBuf(buf,name);
@@ -432,7 +520,7 @@ async function clearAll(){if(!confirm('¿Limpiar sesión?'))return;DATA={zeus:nu
       document.getElementById('status-'+k).textContent='✓ Cargado';
       document.getElementById('rows-'+k).textContent=Math.max(0,rows.length-(k==='tms'?0:1))+' filas';
       if(k==='tms'&&name.toLowerCase().endsWith('.zip'))document.getElementById('tag-tms').textContent='ZIP → CSV';
-    }catch(e){/* ignorar error de restauración */}
+    }catch(e){}
   }
   autoSuggestWindow();
 })();
