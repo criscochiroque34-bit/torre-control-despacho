@@ -195,8 +195,15 @@ let RESULT=null;
 let activeFlota='__all__';
 
 /* ---- utils ---- */
-function norm(s){return(s==null?'':s.toString()).trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');}
-function normCode(s){return(s==null?'':s.toString()).trim();}  // códigos: solo trim, conservar formato
+// Elimina BOM (\uFEFF), tildes, normaliza mayúsculas — FIX: CSV con BOM encoding
+function norm(s){return(s==null?'':s.toString()).replace(/\uFEFF/g,'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');}
+// Código de cruce: texto exacto, sin BOM, sin espacios, sin ".0" residual de floats
+function normCode(s){
+  if(s==null)return'';
+  let c=s.toString().replace(/\uFEFF/g,'').trim();
+  if(/^\d+\.0+$/.test(c))c=c.replace(/\.0+$/,'');  // "123.0" → "123"
+  return c.toUpperCase();  // case-insensitive para códigos con letras
+}
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',3500);}
 function toNaive(v){
   if(v==null||v==='')return null;
@@ -222,13 +229,44 @@ async function idbClear(){try{const db=await idb();return new Promise(res=>{cons
 
 /* ---- parsers ---- */
 function readExcel(buf){
-  const wb=XLSX.read(buf,{type:'array',cellDates:true});
+  const wb=XLSX.read(buf,{type:'array',cellDates:false,raw:true});
   const sheet=wb.Sheets[wb.SheetNames[0]];
-  return XLSX.utils.sheet_to_json(sheet,{header:1,raw:true,defval:null});
+  const range=XLSX.utils.decode_range(sheet['!ref']||'A1');
+  const rows=[];
+  for(let R=range.s.r;R<=range.e.r;R++){
+    const row=[];
+    for(let C=range.s.c;C<=range.e.c;C++){
+      const cell=sheet[XLSX.utils.encode_cell({r:R,c:C})];
+      if(!cell){row.push(null);continue;}
+      if(cell.t==='s'){row.push(cell.v);continue;}          // texto → exacto, sin tocar
+      if(cell.t==='n'){
+        if(looksLikeDateFormat(cell.z)){row.push(cell.v);continue;} // fecha → serial numérico
+        // Número entero grande: convertir a string SIN notación científica
+        if(Math.abs(cell.v)>=1e10){
+          // Usar cell.w (texto que muestra Excel) — más exacto que convertir el float
+          if(cell.w){const cw=cell.w.replace(/[\s,.]/g,'');if(/^\d+$/.test(cw)){row.push(cw);continue;}}
+          row.push(cell.v.toString()); // fallback
+        }else{
+          row.push(cell.v);
+        }
+        continue;
+      }
+      row.push(cell.v!=null?cell.v:null);
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+function looksLikeDateFormat(z){
+  if(!z)return false;
+  const s=z.toString();
+  return /[dmyhs:]/i.test(s)&&s!=='General'&&!/^[0#,.\s%]+$/.test(s);
 }
 function readCSV(text){
-  const out=Papa.parse(text,{header:true,skipEmptyLines:true});
-  // NORMALIZAR TODAS LAS CLAVES DEL CSV → soluciona el problema de tildes/mayúsculas
+  // Eliminar BOM del texto crudo antes de parsear
+  const cleanText = text.replace(/^\uFEFF/,'');
+  const out=Papa.parse(cleanText,{header:true,skipEmptyLines:true,delimiter:''});  // delimiter:'' = auto-detect
+  // Normalizar TODAS las claves: sin tildes, sin BOM, mayúsculas
   return out.data.map(row=>{
     const n={};
     for(const[k,v]of Object.entries(row))n[norm(k)]=v;
@@ -345,9 +383,23 @@ function renderDiag(){
     for(const r of DATA.tms.rows){const v=r[COLS.tms.codigo];if(v)tSet.add(normCode(v));}
     const overlap=[...zSet].filter(c=>tSet.has(c)).length;
     html+=`<div class="diag-row"><span class="lbl">Zeus ∩ TMS</span><span class="val ${overlap>0?'ok':'alert'}">${overlap} códigos coinciden</span></div>`;
-    // Mostrar muestra de claves TMS detectadas
-    const tmsKeys=DATA.tms.rows.length?Object.keys(DATA.tms.rows[0]).slice(0,6).join(', '):'';
-    html+=`<div class="diag-row"><span class="lbl">Claves TMS (norm)</span><span class="val">${tmsKeys.slice(0,60)}</span></div>`;
+    // Mostrar TODAS las columnas TMS con valor de la primera fila — para identificar la columna correcta
+    if(DATA.tms.rows.length){
+      const firstRow=DATA.tms.rows[0];
+      const allKeys=Object.keys(firstRow);
+      html+=`<div class="diag-row"><span class="lbl">Total columnas TMS</span><span class="val">${allKeys.length}</span></div>`;
+      html+=`</div><div class="diag-block" style="grid-column:1/-1"><h4>Columnas TMS (primera fila) — identifica cuál tiene el código de seguimiento</h4>`;
+      html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-height:300px;overflow-y:auto">`;
+      allKeys.forEach(k=>{
+        const v=firstRow[k];
+        const hasVal=v!=null&&v!=='';
+        html+=`<div class="diag-row" style="flex-direction:column;padding:4px 6px;background:var(--panel);border-radius:4px;border:1px solid var(--line);margin:2px">
+          <span class="lbl" style="font-size:10px">${k}</span>
+          <span class="val" style="${hasVal?'color:var(--txt)':'color:var(--line)'}">${hasVal?(v.toString().slice(0,25)||'—'):'(vacío)'}</span>
+        </div>`;
+      });
+      html+='</div>';
+    }
   }
   html+='</div>';
   // Bloque fechas
@@ -442,17 +494,68 @@ function renderAll(){renderTurno();renderKPIs();renderPedidos();renderConos();}
 function renderTurno(){const w=RESULT.win;const f=t=>{const d=new Date(t);return`${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')} ${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;};document.getElementById('turnoLabel').textContent=`Ventana: ${f(w.start)} → ${f(w.end)}`;}
 function renderKPIs(){const ps=activeFlota==='__all__'?RESULT.pedidos:RESULT.pedidos.filter(p=>p.flota===activeFlota);const c={ok:0,warn:0,alert:0,priority:0};ps.forEach(p=>c[p.estado.cat]=(c[p.estado.cat]||0)+1);document.getElementById('kpis').innerHTML=`<div class="kpi"><div class="kn">${ps.length}</div><div class="kl">Pedidos en ventana</div></div><div class="kpi ok"><div class="kn">${c.ok||0}</div><div class="kl">Despachados</div></div><div class="kpi warn"><div class="kn">${c.warn||0}</div><div class="kl">En proceso</div></div><div class="kpi alert"><div class="kn">${c.alert||0}</div><div class="kl">Alertas</div></div><div class="kpi orange"><div class="kn">${c.priority||0}</div><div class="kl">Cuarentena</div></div>`;}
 function pipeStage(lbl,val,missing,na){if(na)return`<div class="pipe-stage na-stage"><div class="ps-label">${lbl}</div><div class="ps-val">N/A</div><div class="ps-sub">no aplica</div></div>`;const cls=missing>0?'has-missing':'all-ok';return`<div class="pipe-stage ${cls}"><div class="ps-label">${lbl}</div><div class="ps-val">${val}</div><div class="ps-sub">${missing>0?`faltan ${missing}`:'todos ✓'}</div></div>`;}
+function ancCell(p,isVan){
+  if(!isVan)return'<span class="stage s-na">N/A</span>';
+  if(p.ancCount===0)return`<span class="stage s-no">0/${p.bultos}</span>`;
+  if(p.ancCount<p.bultos)return`<span class="stage s-part">${p.ancCount}/${p.bultos}</span>`;
+  return`<span class="stage s-ok">${p.ancCount}/${p.bultos}</span>`;
+}
 function renderFlotaSections(ps,isVan){
   let h='';
   const sec=(title,color,rows,cols)=>{if(!rows.length)return'';return`<div class="flota-section"><div class="flota-section-title"><span class="sc" style="background:${color}"></span>${title} — ${rows.length}</div><table class="detail-table"><thead><tr>${cols.map(c=>`<th>${c}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table></div>`;};
-  const sinEti=ps.filter(p=>!p.etiq).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${stageCell(true)}</td><td>${stageCell(false)}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
-  h+=sec('Sin etiquetar','var(--alert)',sinEti,['Código','Bultos','Recep','Etiq','TMS','Estado']);
-  if(isVan){const sinAnc=ps.filter(p=>p.etiq&&p.ancCount<p.bultos).map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td><span class="stage ${p.ancCount===0?'s-no':'s-part'}">${p.ancCount}/${p.bultos}</span></td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);h+=sec('Sin anclar / anclaje incompleto','var(--alert)',sinAnc,['Código','Bultos','Anclaje','TMS','Estado']);}
-  const cuar=ps.filter(p=>p.estado.cat==='priority').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge b-priority">⚠ ${p.estado.label}</span></td></tr>`);
-  h+=sec('Cuarentena','var(--purple)',cuar,['Código','Bultos','TMS','Estado']);
-  const pend=ps.filter(p=>p.estado.cat==='warn'||p.estado.cat==='orange').map(p=>`<tr><td class="mono">${p.codigo}</td><td>${p.bultos}</td><td>${tmsBadge(p)}</td><td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
-  h+=sec('Pendiente TMS / revisar','var(--warn)',pend,['Código','Bultos','TMS','Estado']);
-  return h||'<div class="flota-section" style="color:var(--ok);padding-bottom:14px">✓ Todos los pedidos completos</div>';
+
+  // Sin etiquetar — ahora incluye columna Anclaje
+  const sinEti=ps.filter(p=>!p.etiq).map(p=>`<tr>
+    <td class="mono">${p.codigo}</td><td>${p.bultos}</td>
+    <td>${stageCell(true)}</td><td>${stageCell(false)}</td>
+    <td>${ancCell(p,isVan)}</td><td>${tmsBadge(p)}</td>
+    <td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
+  h+=sec('Sin etiquetar','var(--alert)',sinEti,['Código','Bultos','Recep','Etiq','Anclaje','TMS','Estado']);
+
+  // Sin anclar / parcial (solo vans) — ya tenía Anclaje
+  if(isVan){
+    const sinAnc=ps.filter(p=>p.etiq&&p.ancCount<p.bultos).map(p=>`<tr>
+      <td class="mono">${p.codigo}</td><td>${p.bultos}</td>
+      <td>${stageCell(true)}</td><td>${stageCell(true)}</td>
+      <td>${ancCell(p,isVan)}</td><td>${tmsBadge(p)}</td>
+      <td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
+    h+=sec('Sin anclar / anclaje incompleto','var(--alert)',sinAnc,['Código','Bultos','Recep','Etiq','Anclaje','TMS','Estado']);
+  }
+
+  // Cuarentena — ahora incluye columna Anclaje
+  const cuar=ps.filter(p=>p.estado.cat==='priority').map(p=>`<tr>
+    <td class="mono">${p.codigo}</td><td>${p.bultos}</td>
+    <td>${stageCell(p.etiq)}</td><td>${ancCell(p,isVan)}</td>
+    <td>${tmsBadge(p)}</td>
+    <td><span class="badge b-priority">⚠ ${p.estado.label}</span></td></tr>`);
+  h+=sec('Cuarentena — no deben salir','var(--purple)',cuar,['Código','Bultos','Etiq','Anclaje','TMS','Estado']);
+
+  // Pendiente TMS / revisar — ahora incluye columna Anclaje
+  const pend=ps.filter(p=>p.estado.cat==='warn'||p.estado.cat==='orange').map(p=>`<tr>
+    <td class="mono">${p.codigo}</td><td>${p.bultos}</td>
+    <td>${stageCell(p.etiq)}</td><td>${ancCell(p,isVan)}</td>
+    <td>${tmsBadge(p)}</td>
+    <td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
+  h+=sec('Pendiente TMS / revisar','var(--warn)',pend,['Código','Bultos','Etiq','Anclaje','TMS','Estado']);
+
+  // Tabla completa — TODOS los pedidos (primeros 500, paginado)
+  const allRows=ps.slice(0,500).map(p=>`<tr>
+    <td class="mono">${p.codigo}</td><td>${p.bultos}</td>
+    <td>${stageCell(p.recep)}</td><td>${stageCell(p.etiq)}</td>
+    <td>${ancCell(p,isVan)}</td><td>${tmsBadge(p)}</td>
+    <td><span class="badge ${CATBADGE[p.estado.cat]}">${p.estado.label}</span></td></tr>`);
+  const totalLabel=ps.length>500?` (mostrando 500 de ${ps.length})`:'';
+  h+=`<div class="flota-section">
+    <div class="flota-section-title" style="cursor:pointer" onclick="toggleTodos('todos_${ps[0]?.flota||'x'}',this)">
+      <span class="sc" style="background:var(--muted)"></span>Ver todos los pedidos${totalLabel} <span style="margin-left:4px">▶</span>
+    </div>
+    <div id="todos_${ps[0]?.flota||'x'}" style="display:none">
+      <table class="detail-table"><thead><tr>
+        <th>Código</th><th>Bultos</th><th>Recep</th><th>Etiq</th><th>Anclaje</th><th>TMS</th><th>Estado</th>
+      </tr></thead><tbody>${allRows.join('')}</tbody></table>
+    </div></div>`;
+
+  return h;
 }
 function renderPedidos(){
   const cont=document.getElementById('tab-pedidos');
@@ -500,6 +603,7 @@ function exportExcel(){
 }
 
 /* ---- UI ---- */
+function toggleTodos(id,el){const d=document.getElementById(id);const open=d.style.display!=='none';d.style.display=open?'none':'block';el.querySelector('span:last-child').textContent=open?'▶':'▼';}
 function switchTab(n,el){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.getElementById('tab-'+n).classList.add('active');el.classList.add('active');}
 function toggleFlota(id,h){const b=document.getElementById(id);b.classList.toggle('open',!b.classList.contains('open'));h.classList.toggle('expanded',!h.classList.contains('expanded'));}
 function toggleCono(id,row){const e=document.getElementById(id);e.classList.toggle('hidden');row.classList.toggle('expanded');}
