@@ -262,17 +262,29 @@ function looksLikeDateFormat(z){
   const s=z.toString();
   return /[dmyhs:]/i.test(s)&&s!=='General'&&!/^[0#,.\s%]+$/.test(s);
 }
-// Parsea CSV en streaming desde un Blob — evita "Invalid string length" en archivos enormes
-// (no construye una sola cadena gigante; PapaParse lee por chunks)
-function parseCSVBlob(blob){
+// Parsea el CSV del TMS en streaming Y deduplica EN EL MOMENTO:
+// solo conserva el registro MÁS RECIENTE por código. Esto evita acumular
+// millones de filas en memoria — el resultado final es ~ una fila por código único.
+function parseTMSDeduped(blob,codCol,fechaCol){
   return new Promise((resolve,reject)=>{
-    const rows=[];
+    const map=new Map();
+    let total=0;
     Papa.parse(blob,{
       header:true,
       skipEmptyLines:true,
-      transformHeader:h=>norm(h),  // normaliza encabezados: sin BOM, sin tildes, mayúsculas
-      step:res=>{ if(res.errors&&res.errors.length){/* ignorar errores de fila suelta */} rows.push(res.data); },
-      complete:()=>resolve(rows),
+      transformHeader:h=>norm(h),
+      step:res=>{
+        total++;
+        const row=res.data;
+        const rawCod=row[codCol];
+        if(rawCod==null||rawCod==='')return;
+        const key=normCode(rawCod);
+        if(!key)return;
+        const t=toNaive(row[fechaCol])||0;
+        const prev=map.get(key);
+        if(!prev||t>=prev.__t){row.__t=t;map.set(key,row);}
+      },
+      complete:()=>resolve({rows:[...map.values()],total}),
       error:err=>reject(err)
     });
   });
@@ -283,13 +295,12 @@ async function parseTMSFromBuf(buf,name){
     const zip=await JSZip.loadAsync(buf);
     const fn=Object.keys(zip.files).find(n=>/\.(csv|txt)$/i.test(n));
     if(!fn)throw new Error('No se encontró CSV dentro del ZIP');
-    // uint8array: no tiene límite de longitud de string, soporta archivos grandes
     const u8=await zip.files[fn].async('uint8array');
     blob=new Blob([u8]);
   }else{
     blob=new Blob([buf]);
   }
-  return parseCSVBlob(blob);
+  return parseTMSDeduped(blob,COLS.tms.codigo,COLS.tms.fecha);
 }
 
 /* ---- carga ---- */
@@ -301,13 +312,13 @@ async function onFile(kind,input){
   card.className='file-card'; st.innerHTML='<span class="spinner"></span> Leyendo...'; rw.textContent='';
   try{
     const buf=await file.arrayBuffer();
-    let rows;
-    if(kind==='tms')rows=await parseTMSFromBuf(buf,file.name);
+    let rows, tmsTotal=null;
+    if(kind==='tms'){const r=await parseTMSFromBuf(buf,file.name);rows=r.rows;tmsTotal=r.total;}
     else rows=readExcel(buf);
-    DATA[kind]={rows,name:file.name};
+    DATA[kind]={rows,name:file.name,tmsTotal};
     card.classList.add('ok'); st.textContent='✓ Cargado';
     const n=Math.max(0,rows.length-(kind==='tms'?0:1));
-    rw.textContent=n+' filas';
+    rw.textContent=kind==='tms'?`${rows.length} códigos únicos (de ${tmsTotal} filas)`:n+' filas';
     if(kind==='tms'&&file.name.toLowerCase().endsWith('.zip'))document.getElementById('tag-tms').textContent='ZIP → CSV';
     await idbSet(kind+'_buf',buf);
     await idbSet(kind+'_name',file.name);
@@ -363,7 +374,8 @@ function renderDiag(){
     const headerInfo=k==='tms'&&d?'(CSV — claves normalizadas)':(d&&d.rows[0]?`Fila 1: "${(d.rows[0][COLS[k]?.codigo??0]||'').toString().slice(0,30)}"`:'-');
     html+=`<div class="diag-block"><h4>${labels[k]}</h4>
       <div class="diag-row"><span class="lbl">Estado</span><span class="val ${d?'ok':'alert'}">${d?'✓ Cargado':'✕ Sin cargar'}</span></div>
-      <div class="diag-row"><span class="lbl">Total filas</span><span class="val">${d?Math.max(0,d.rows.length-(k==='tms'?0:1)):'-'}</span></div>
+      <div class="diag-row"><span class="lbl">${k==='tms'?'Códigos únicos':'Total filas'}</span><span class="val">${d?(k==='tms'?d.rows.length:Math.max(0,d.rows.length-1)):'-'}</span></div>
+      ${k==='tms'&&d?`<div class="diag-row"><span class="lbl">Filas procesadas (raw)</span><span class="val">${d.tmsTotal??'-'}</span></div>`:''}
       <div class="diag-row"><span class="lbl">Header/info</span><span class="val">${headerInfo}</span></div>
       <div class="diag-row"><span class="lbl">Col. código</span><span class="val">${k==='tms'?COLS.tms.codigo:'Col '+String.fromCharCode(65+(COLS[k]?.codigo??0))}</span></div>
       <div class="diag-row"><span class="lbl">Muestra códigos</span><span class="val">${samples.length?samples.slice(0,3).join(' | '):'(vacío)'}</span></div>
@@ -624,13 +636,13 @@ async function clearAll(){if(!confirm('¿Limpiar sesión?'))return;DATA={zeus:nu
     try{
       const buf=await idbGet(k+'_buf'); const name=await idbGet(k+'_name');
       if(!buf||!name)continue;
-      let rows;
-      if(k==='tms')rows=await parseTMSFromBuf(buf,name);
+      let rows, tmsTotal=null;
+      if(k==='tms'){const r=await parseTMSFromBuf(buf,name);rows=r.rows;tmsTotal=r.total;}
       else rows=readExcel(buf);
-      DATA[k]={rows,name};
+      DATA[k]={rows,name,tmsTotal};
       document.getElementById('card-'+k).classList.add('ok');
       document.getElementById('status-'+k).textContent='✓ Cargado';
-      document.getElementById('rows-'+k).textContent=Math.max(0,rows.length-(k==='tms'?0:1))+' filas';
+      document.getElementById('rows-'+k).textContent=k==='tms'?`${rows.length} códigos únicos (de ${tmsTotal} filas)`:Math.max(0,rows.length-1)+' filas';
       if(k==='tms'&&name.toLowerCase().endsWith('.zip'))document.getElementById('tag-tms').textContent='ZIP → CSV';
     }catch(e){}
   }
