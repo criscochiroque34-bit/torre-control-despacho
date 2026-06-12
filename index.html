@@ -262,26 +262,34 @@ function looksLikeDateFormat(z){
   const s=z.toString();
   return /[dmyhs:]/i.test(s)&&s!=='General'&&!/^[0#,.\s%]+$/.test(s);
 }
-function readCSV(text){
-  // Eliminar BOM del texto crudo antes de parsear
-  const cleanText = text.replace(/^\uFEFF/,'');
-  const out=Papa.parse(cleanText,{header:true,skipEmptyLines:true,delimiter:''});  // delimiter:'' = auto-detect
-  // Normalizar TODAS las claves: sin tildes, sin BOM, mayúsculas
-  return out.data.map(row=>{
-    const n={};
-    for(const[k,v]of Object.entries(row))n[norm(k)]=v;
-    return n;
+// Parsea CSV en streaming desde un Blob — evita "Invalid string length" en archivos enormes
+// (no construye una sola cadena gigante; PapaParse lee por chunks)
+function parseCSVBlob(blob){
+  return new Promise((resolve,reject)=>{
+    const rows=[];
+    Papa.parse(blob,{
+      header:true,
+      skipEmptyLines:true,
+      transformHeader:h=>norm(h),  // normaliza encabezados: sin BOM, sin tildes, mayúsculas
+      step:res=>{ if(res.errors&&res.errors.length){/* ignorar errores de fila suelta */} rows.push(res.data); },
+      complete:()=>resolve(rows),
+      error:err=>reject(err)
+    });
   });
 }
 async function parseTMSFromBuf(buf,name){
+  let blob;
   if(name.toLowerCase().endsWith('.zip')){
     const zip=await JSZip.loadAsync(buf);
     const fn=Object.keys(zip.files).find(n=>/\.(csv|txt)$/i.test(n));
     if(!fn)throw new Error('No se encontró CSV dentro del ZIP');
-    const text=await zip.files[fn].async('string');
-    return readCSV(text);
+    // uint8array: no tiene límite de longitud de string, soporta archivos grandes
+    const u8=await zip.files[fn].async('uint8array');
+    blob=new Blob([u8]);
+  }else{
+    blob=new Blob([buf]);
   }
-  return readCSV(new TextDecoder('utf-8').decode(buf));
+  return parseCSVBlob(blob);
 }
 
 /* ---- carga ---- */
